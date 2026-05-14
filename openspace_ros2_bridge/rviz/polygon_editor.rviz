@@ -30,6 +30,10 @@ Visualization Manager:
     - Class: rviz_default_plugins/Select
     - Class: rviz_default_plugins/PublishPoint
       Topic: /clicked_point
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic: /initialpose
+    - Class: rviz_default_plugins/SetGoal
+      Topic: /goal_pose
   Views:
     Current:
       Class: rviz_default_plugins/TopDownOrtho

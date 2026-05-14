@@ -119,9 +119,22 @@ ros2 service call /map_editor_node/finish_polygon std_srvs/srv/Trigger {}
 
 ### 第二步：设置起终点
 
+在 RViz2 工具栏中：
+
+| 操作 | 工具 | 快捷键 |
+|------|------|--------|
+| 设置**起点**（位置+朝向） | **2D Pose Estimate** | 点击位置后**拖动**鼠标设定朝向再释放 |
+| 设置**终点**（位置+朝向） | **2D Goal Pose** | 同上 |
+
+或者用命令行：
+
 ```bash
-# 设置起点（位置 + 朝向）
-ros2 topic pub --once /start_pose geometry_msgs/msg/PoseStamped \
+# 设置起点
+ros2 topic pub --once /initialpose geometry_msgs/msg/PoseStamped \
+  '{pose: {position: {x: 0, y: 0}, orientation: {w: 1}}}'
+
+# 设置终点
+ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped \
   '{pose: {position: {x: 0, y: 0, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}}'
 
 # 设置终点
@@ -247,7 +260,7 @@ ros2 run openspace_ros2_bridge planner_bridge_node \
 
 | 话题 | 类型 | 说明 |
 |------|------|------|
-| `/start_pose` | `geometry_msgs/PoseStamped` | 规划起点 |
+| `/initialpose` | `geometry_msgs/PoseStamped` | 规划起点（RViz 2D Pose Estimate 工具） |
 | `/goal_pose` | `geometry_msgs/PoseStamped` | 规划终点 |
 | `/obstacle_polygons` | `visualization_msgs/MarkerArray` | 障碍物多边形（由 Map Editor 发布） |
 
@@ -326,7 +339,7 @@ ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x:
 ros2 service call /map_editor_node/finish_polygon std_srvs/srv/Trigger {}
 
 # 4. 设置起点（朝向正东）
-ros2 topic pub --once /start_pose geometry_msgs/msg/PoseStamped \
+ros2 topic pub --once /initialpose geometry_msgs/msg/PoseStamped \
   '{pose: {position: {x: 0, y: 0}, orientation: {w: 1}}}'
 
 # 5. 设置终点
@@ -348,7 +361,7 @@ ros2 service call /map_editor_node/save_scene std_srvs/srv/Trigger {}
 
 | 错误 | 响应消息 | 含义 |
 |------|----------|------|
-| 缺少起终点 | `Start or goal pose not set` | 需要先发布 `/start_pose` 和 `/goal_pose` |
+| 缺少起终点 | `Start or goal pose not set` | 需要先设置起点和终点 |
 | 起点越界 | `Start is out of map bounds` | 起点超出 40m×40m 地图范围 |
 | 终点越界 | `Goal is out of map bounds` | 终点超出地图范围 |
 | 碰撞 | `Start/Goal is in collision with obstacle` | 起/终点与障碍物碰撞 |

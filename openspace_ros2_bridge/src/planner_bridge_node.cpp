@@ -32,16 +32,18 @@ class PlannerBridgeNode : public rclcpp::Node {
     box_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/vehicle_boxes", 10);
     result_pub_ = this->create_publisher<std_msgs::msg::String>("/planning_result", 10);
 
-    // Subscriber for start pose (via RViz 2D Goal Pose)
+    // Subscriber for start pose (via RViz 2D Pose Estimate tool)
     start_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-        "/start_pose", 10,
+        "/initialpose", 10,
         [this](geometry_msgs::msg::PoseStamped::ConstSharedPtr msg) {
           start_ = msg;
-          RCLCPP_INFO(this->get_logger(), "Start pose: (%.2f, %.2f)",
-                      msg->pose.position.x, msg->pose.position.y);
+          RCLCPP_INFO(this->get_logger(), "Start pose: (%.2f, %.2f, %.1f deg)",
+                      msg->pose.position.x, msg->pose.position.y,
+                      std::atan2(2.0*(msg->pose.orientation.w*msg->pose.orientation.z + msg->pose.orientation.x*msg->pose.orientation.y),
+                                 1.0-2.0*(msg->pose.orientation.y*msg->pose.orientation.y + msg->pose.orientation.z*msg->pose.orientation.z))*180.0/M_PI);
         });
 
-    // Subscriber for goal pose (via RViz 2D Goal Pose)
+    // Subscriber for goal pose (via RViz 2D Goal Pose tool)
     goal_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
         "/goal_pose", 10,
         [this](geometry_msgs::msg::PoseStamped::ConstSharedPtr msg) {
@@ -71,9 +73,9 @@ class PlannerBridgeNode : public rclcpp::Node {
     loadConfigs();
 
     RCLCPP_INFO(this->get_logger(), "Planner Bridge Node ready. "
-                "Set start/goal via /start_pose /goal_pose topics, "
-                "send polygons to /obstacle_polygons, "
-                "call ~/plan_path service to trigger planning.");
+                "Set start via RViz '2D Pose Estimate', goal via '2D Goal Pose', "
+                "or publish to /initialpose /goal_pose topics. "
+                "Call ~/plan_path to trigger planning.");
   }
 
  private:
