@@ -182,7 +182,27 @@ class MapEditorNode(Node):
         """Publish planner input + visualization."""
         planner_arr = MarkerArray()   # OUTLINE only → /obstacle_polygons
         viz_arr = MarkerArray()       # Fill + outline + labels + vertices → /polygon_viz
-        marker_id = 0
+
+        # Invisible ground plane (Publish Point needs a surface to click on)
+        ground = Marker()
+        ground.header.frame_id = "map"
+        ground.header.stamp = self.get_clock().now().to_msg()
+        ground.ns = "ground"
+        ground.id = 0
+        ground.type = Marker.CUBE
+        ground.action = Marker.ADD
+        ground.pose.position.z = -0.1
+        ground.pose.orientation.w = 1.0
+        ground.scale.x = 50.0
+        ground.scale.y = 50.0
+        ground.scale.z = 0.01
+        ground.color.a = 0.01  # nearly invisible
+        ground.color.r = 0.5
+        ground.color.g = 0.5
+        ground.color.b = 0.5
+        viz_arr.markers.append(ground)
+
+        marker_id = 1
 
         # Completed polygons
         for i, poly in enumerate(self.polygons):
