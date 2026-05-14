@@ -7,9 +7,6 @@ Visualization Manager:
   Displays:
     - Class: rviz_common/Grid
       Name: Grid
-    - Class: rviz_common/Map
-      Name: Map
-      Enabled: false
     - Class: rviz_default_plugins/MarkerArray
       Name: Obstacle Polygons
       Topic: /obstacle_polygons
@@ -26,8 +23,6 @@ Visualization Manager:
       Name: Trajectory Path
       Topic: /trajectory_path
       Enabled: true
-    - Class: rviz_default_plugins/Tool Properties
-      Name: Tool Properties
   Global Options:
     Fixed Frame: map
     Frame Rate: 30
