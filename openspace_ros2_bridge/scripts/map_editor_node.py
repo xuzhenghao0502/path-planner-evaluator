@@ -179,40 +179,52 @@ class MapEditorNode(Node):
     # ---- Visualization ----
 
     def _publish_all(self):
-        """Build MarkerArray for the planner and visualization."""
-        arr = MarkerArray()
+        """Publish planner input + visualization."""
+        planner_arr = MarkerArray()   # OUTLINE only → /obstacle_polygons
+        viz_arr = MarkerArray()       # Fill + outline + labels + vertices → /polygon_viz
+        marker_id = 0
 
-        # Published polygons
+        # Completed polygons
         for i, poly in enumerate(self.polygons):
-            marker = self._make_polygon_marker(
-                poly["vertices"], i, poly["is_occupied"]
-            )
-            arr.markers.append(marker)
+            vertices = poly["vertices"]
+            is_occupied = poly["is_occupied"]
 
-        # Current drawing polygon (preview)
+            # Fill (TRIANGLE_LIST) — viz only
+            fill = self._make_fill_marker(vertices, marker_id, is_occupied)
+            marker_id += 1
+            if fill is not None:
+                viz_arr.markers.append(fill)
+
+            # Thick outline (LINE_STRIP) — both planner and viz
+            outline = self._make_polygon_marker(
+                vertices, marker_id, is_occupied, scale=0.08, alpha=0.8
+            )
+            marker_id += 1
+            planner_arr.markers.append(outline)
+            viz_arr.markers.append(outline)
+
+            # Text label — viz only
+            cx = sum(v[0] for v in vertices) / len(vertices)
+            cy = sum(v[1] for v in vertices) / len(vertices)
+            label = self._make_text_marker(
+                str(i + 1), cx, cy, marker_id, is_occupied
+            )
+            marker_id += 1
+            viz_arr.markers.append(label)
+
+        # In-progress polygon: thin outline — viz only (NOT sent to planner)
         if self.current_polygon:
-            marker = self._make_polygon_marker(
+            preview = self._make_polygon_marker(
                 self.current_polygon,
-                len(self.polygons),
+                marker_id,
                 (self.mode == "obstacle"),
+                scale=0.03,
                 alpha=0.3,
             )
-            arr.markers.append(marker)
+            marker_id += 1
+            viz_arr.markers.append(preview)
 
-        self.polygon_pub.publish(arr)
-
-        # Also publish to viz topic with point markers for vertices
-        self._publish_viz(arr)
-
-    def _publish_viz(self, arr: MarkerArray):
-        """Publish additional visualization (vertex points, edges)."""
-        viz = MarkerArray()
-
-        # Add polygon edge markers
-        for i, marker in enumerate(arr.markers):
-            viz.markers.append(marker)
-
-        # Add vertex sphere markers for current polygon
+        # Vertex spheres — viz only
         for j, (x, y) in enumerate(self.current_polygon):
             pt = Marker()
             pt.header.frame_id = "map"
@@ -223,7 +235,7 @@ class MapEditorNode(Node):
             pt.action = Marker.ADD
             pt.pose.position.x = x
             pt.pose.position.y = y
-            pt.pose.position.z = 0.0
+            pt.pose.position.z = 0.05
             pt.pose.orientation.w = 1.0
             pt.scale.x = 0.15
             pt.scale.y = 0.15
@@ -231,21 +243,22 @@ class MapEditorNode(Node):
             pt.color.r = 1.0 if self.mode == "obstacle" else 0.0
             pt.color.g = 0.0 if self.mode == "obstacle" else 1.0
             pt.color.b = 0.0
-            pt.color.a = 0.8
-            viz.markers.append(pt)
+            pt.color.a = 0.9
+            viz_arr.markers.append(pt)
 
-        self.viz_pub.publish(viz)
+        self.polygon_pub.publish(planner_arr)
+        self.viz_pub.publish(viz_arr)
 
-    def _make_polygon_marker(self, vertices, idx, is_occupied, alpha=0.5):
+    def _make_polygon_marker(self, vertices, idx, is_occupied, scale=0.05, alpha=0.5):
         """Create a LINE_STRIP marker for a polygon contour."""
         marker = Marker()
         marker.header.frame_id = "map"
         marker.header.stamp = self.get_clock().now().to_msg()
-        marker.ns = "polygon"
+        marker.ns = "polygon_outline"
         marker.id = idx
         marker.type = Marker.LINE_STRIP
         marker.action = Marker.ADD
-        marker.scale.x = 0.05  # line width
+        marker.scale.x = scale
         marker.color.a = alpha
 
         if is_occupied:
@@ -263,6 +276,64 @@ class MapEditorNode(Node):
         # Close the polygon loop
         if vertices:
             marker.points.append(Point(x=vertices[0][0], y=vertices[0][1], z=0.0))
+
+        return marker
+
+    def _make_fill_marker(self, vertices, idx, is_occupied):
+        """Create a filled TRIANGLE_LIST marker (fan from centroid)."""
+        if len(vertices) < 3:
+            return None
+
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "polygon_fill"
+        marker.id = idx
+        marker.type = Marker.TRIANGLE_LIST
+        marker.action = Marker.ADD
+        marker.pose.position.z = -0.01  # slightly below outline
+        marker.color.a = 0.25
+
+        if is_occupied:
+            marker.color.r = 1.0
+            marker.color.g = 0.0
+        else:
+            marker.color.r = 0.0
+            marker.color.g = 1.0
+        marker.color.b = 0.0
+
+        # Compute centroid for fan triangulation
+        cx = sum(v[0] for v in vertices) / len(vertices)
+        cy = sum(v[1] for v in vertices) / len(vertices)
+
+        for i in range(len(vertices)):
+            j = (i + 1) % len(vertices)
+            x1, y1 = vertices[i]
+            x2, y2 = vertices[j]
+            marker.points.append(Point(x=cx, y=cy, z=0.0))
+            marker.points.append(Point(x=x1, y=y1, z=0.0))
+            marker.points.append(Point(x=x2, y=y2, z=0.0))
+
+        return marker
+
+    def _make_text_marker(self, text, x, y, idx, is_occupied):
+        """Create a TEXT_VIEW_FACING marker for polygon label."""
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "polygon_label"
+        marker.id = idx
+        marker.type = Marker.TEXT_VIEW_FACING
+        marker.action = Marker.ADD
+        marker.pose.position.x = x
+        marker.pose.position.y = y
+        marker.pose.position.z = 0.1
+        marker.scale.z = 0.4  # text height
+        marker.text = text
+        marker.color.a = 0.9
+        marker.color.r = 1.0
+        marker.color.g = 1.0
+        marker.color.b = 1.0
 
         return marker
 
