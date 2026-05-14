@@ -19,6 +19,7 @@ class FreespaceBuilder {
             double origin_x, double origin_y);
 
   void addPolygon(const PolygonRegion& region);
+  void clear() { regions_.clear(); }
 
   std::shared_ptr<gpal::pnc::planning::Freespace> build();
 

@@ -13,6 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(fmt REQUIRED)
+find_package(std_srvs REQUIRED)
 
 # Reference code paths
 set(REFERENCE_ROOT ${CMAKE_SOURCE_DIR}/../reference_code)
@@ -75,7 +76,7 @@ add_executable(planner_bridge_node
   src/freespace_adapter.cpp
 )
 ament_target_dependencies(planner_bridge_node
-  rclcpp nav_msgs visualization_msgs geometry_msgs std_msgs Eigen3
+  rclcpp nav_msgs visualization_msgs geometry_msgs std_msgs std_srvs Eigen3
 )
 target_link_libraries(planner_bridge_node
   openspace_algorithm
@@ -90,8 +91,10 @@ target_include_directories(planner_bridge_node PRIVATE
 # ============================================================
 
 install(TARGETS planner_bridge_node DESTINATION lib/${PROJECT_NAME})
+install(PROGRAMS scripts/map_editor_node.py DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY rviz DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY scenes DESTINATION share/${PROJECT_NAME})
 
 ament_package()
