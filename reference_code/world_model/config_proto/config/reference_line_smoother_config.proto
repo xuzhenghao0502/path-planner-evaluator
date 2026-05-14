@@ -1,0 +1,43 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+import "config/ocp_config.proto";
+
+message OcpSmootherConfig {
+  optional double l_lower = 1 [default = -1.0];
+  optional double l_upper = 2 [default = 1.0];
+  optional double l_weight_straight = 3 [default = 0.0001];
+  optional double l_weight_curve = 4 [default = 1.0];
+  optional double l_weight_terminal = 5 [default = 0.01];
+  optional double l_weight_low_speed = 6 [default = 10.0];
+
+  optional double soft_l_lower = 7 [default = -0.1];
+  optional double soft_l_upper = 8 [default = 0.1];
+  optional double slack_offset_weight = 9 [default = 1.0];
+
+  optional double kappa_lower_straight = 10 [default = -0.1];
+  optional double kappa_upper_straight = 11 [default = 0.1];
+  optional double kappa_lower_curve = 12 [default = -0.2];
+  optional double kappa_upper_curve = 13 [default = 0.2];
+  optional double kappa_weight = 14 [default = 400.0];
+  optional double kappa_weight_terminal = 15 [default = 400.0];
+
+  optional double dkappa_lower_straight = 16 [default = -0.0114];
+  optional double dkappa_upper_straight = 17 [default = 0.0114];
+  optional double dkappa_lower_curve = 18 [default = -0.05];
+  optional double dkappa_upper_curve = 19 [default = 0.05];
+  optional double dkappa_weight = 20 [default = 5.0];
+
+  optional double s_resolution = 21 [default = 1.0];
+}
+
+message ReferenceLineSmootherConfig {
+  optional bool enable_data_recorder = 1 [default = false];
+  optional OcpSmootherConfig ocp_smoother = 2;
+  optional OcpConfig sync_ocp_config = 3;
+  optional OcpConfig async_ocp_config = 4;
+  optional float smooth_length_backward = 5;
+  optional float smooth_length_forward = 6;
+  optional bool enable_evaluation = 20 [default = false];
+}

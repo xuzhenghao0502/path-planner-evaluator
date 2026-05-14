@@ -1,0 +1,43 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+import "config/spatiotemporal_planner/spatiotemporal_manager_config.proto";
+import "config/optimizer_common_config.proto";
+
+
+message SpatiotemporalPreprocessProfile {
+
+  // replan to update planning start point.
+  optional bool enable_replan = 11 [default = true];
+  optional bool enable_replan_lateral_exceed_heading = 12 [default = true];
+  optional bool enable_replan_kappa = 13 [default = true];
+  optional float replan_lateral_error_thresold = 14 [default = 0.7];
+  optional float replan_longitudinal_error_thresold = 15 [default = 3.0];
+  optional float replan_heading_thresold = 16 [default = 8.0];
+  optional float replan_lateral_error_thresold_lane = 17 [default = 0.7];
+  optional float replan_longitudinal_error_thresold_lane = 18 [default = 3.0];
+  optional float replan_heading_thresold_lane = 19 [default = 8.0];
+  optional bool enable_replan_use_local_in_navi = 21 [default = false];
+
+  //reference_line process
+  optional float max_acc = 22 [default = 2.0];
+  optional float min_reference_length = 24 [default = 150.0];
+  optional float reference_length_buffer = 25 [default = 10.0];
+  optional float ref_line_interval = 26 [default = 0.2];
+
+  optional SpeedKappaBoundMap speed_kappa_bound_map = 51;
+
+  optional SpeedSteerAngleBoundMap speed_steer_angle_bound_map = 52;
+
+}
+
+message SpatiotemporalPreprocessConfig {
+  optional SpatioTemporalManagerConfig manager = 1;
+  optional SpatiotemporalPreprocessProfile profiles  = 2;
+}
+
+// 参数列表容器
+message SpatiotemporalPreprocessConfigList {
+  repeated SpatiotemporalPreprocessConfig entries = 1;
+}

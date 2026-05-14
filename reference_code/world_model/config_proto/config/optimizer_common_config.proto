@@ -1,0 +1,46 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+message AttenuationParam {
+    optional double coefficient = 1 [default = 0.0];
+    optional double min_step = 2 [default = 0.0];
+    optional double min_value = 3 [default = 0.0];
+  }
+
+  message SpeedKappaBoundMap {
+    message Element {
+      optional double speed = 1;
+      optional double kappa_bound = 2;
+      optional double dkappa_bound = 3;
+    }
+    repeated Element elements = 1;
+  }
+
+  message SpeedSteerAngleBoundMap {
+    message Element {
+      optional double speed = 1;
+      optional double steer_angle_bound = 2;
+      optional double dsteer_angle_bound = 3;
+    }
+    repeated Element elements = 1;
+  }
+
+  message OneDimensionalTable {
+    message Element {
+      optional double key = 1;
+      optional double value = 2;
+    }
+    repeated Element elements = 1;
+  }
+
+  message MultiElementOneDimensionalTable {
+    message Element {
+      optional string name = 1;
+      optional double value = 2;
+    }
+    message MultiElement {
+      optional double key = 1;
+      repeated Element elements = 2;
+    }
+    repeated MultiElement multi_elements = 1;
+  }

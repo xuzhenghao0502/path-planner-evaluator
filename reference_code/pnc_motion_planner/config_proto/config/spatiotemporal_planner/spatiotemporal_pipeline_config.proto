@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message PipelineEntry {
+  optional string name = 1; 
+  repeated string module = 2;
+}
+
+message SpatiotemporalPipelineConfigList {
+  repeated PipelineEntry entries = 1;
+}

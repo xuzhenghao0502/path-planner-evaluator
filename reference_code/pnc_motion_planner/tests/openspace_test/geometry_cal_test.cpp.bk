@@ -1,0 +1,389 @@
+#include <gtest/gtest.h>
+
+#include <typeinfo>
+
+#include "math/circle.h"
+#include "math/line_segment2d.h"
+#include "math/vec2d.h"
+#include "openspace_path_planner/core/generator/geometry_path_generator.h"
+#include "openspace_path_planner/utils/geometry_utils.h"
+
+namespace gpal::pnc::planning {
+
+TEST(GeometryUtilsTest, TestCalCirclesTangentToLineThroughPoint) {
+  // Case 1: Point on the line
+  {
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Vec2d point(2, 0);
+    double radius = 1.0;
+    std::vector<math::Circle> tangent_circles;
+
+    uint8_t result = calCirclesTangentToLineThroughPoint(line, point, radius, tangent_circles);
+
+    // Should call calCirclesTangentToLinePoint and return its result
+    // Expect 2 circles (one on each side of the line)
+    EXPECT_EQ(result, 2);
+    EXPECT_EQ(tangent_circles.size(), 2);
+  }
+
+  // Case 2: Point not on the line, one tangent circle
+  {
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Vec2d point(2, 2);
+    double radius = 1.0;
+    std::vector<math::Circle> tangent_circles;
+
+    uint8_t result = calCirclesTangentToLineThroughPoint(line, point, radius, tangent_circles);
+
+    // Should find exactly one tangent circle
+    EXPECT_EQ(result, 1);
+    EXPECT_EQ(tangent_circles.size(), 1);
+    EXPECT_NEAR(tangent_circles[0].center().x(), 2.0, 1e-6);
+    EXPECT_NEAR(tangent_circles[0].center().y(), 1.0, 1e-6);
+  }
+
+  // Case 3: Point not on the line, two tangent circles
+  {
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Vec2d point(2, 1);
+    double radius = 1.0;
+    std::vector<math::Circle> tangent_circles;
+
+    uint8_t result = calCirclesTangentToLineThroughPoint(line, point, radius, tangent_circles);
+
+    // Should find two tangent circles
+    EXPECT_EQ(result, 2);
+    EXPECT_EQ(tangent_circles.size(), 2);
+  }
+
+  // Case 4: Point too far from line for tangent circles (no solution)
+  {
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Vec2d point(2, 5);
+    double radius = 0.4;  // Radius smaller than distance
+    std::vector<math::Circle> tangent_circles;
+
+    uint8_t result = calCirclesTangentToLineThroughPoint(line, point, radius, tangent_circles);
+
+    // Should find no tangent circles
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(tangent_circles.size(), 0);
+  }
+
+  // Case 5: Diagonal line test
+  {
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 4));
+    math::Vec2d point(2, 0);
+    double radius = sqrt(2.0) / 2.0;
+    std::vector<math::Circle> tangent_circles;
+
+    uint8_t result = calCirclesTangentToLineThroughPoint(line, point, radius, tangent_circles);
+    // Should find two tangent circles
+    EXPECT_EQ(result, 1);
+    EXPECT_EQ(tangent_circles.size(), 1);
+  }
+
+  // Case 6: Line segment valid test
+  {
+    math::LineSegment2d line(math::Vec2d(4, 0), math::Vec2d(4, 0));
+    math::Vec2d point(2, 0);
+    double radius = 1.0;
+    std::vector<math::Circle> tangent_circles;
+    uint8_t result = calCirclesTangentToLineThroughPoint(line, point, radius, tangent_circles);
+    // Should find no tangent circles
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(tangent_circles.size(), 0);
+  }
+}
+
+TEST(GeometryUtilsTest, TestCalCirclesTangentToLinePoint) {
+  {
+    // 测试用例1：一般情况
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Vec2d tangent_point(2, 0);
+    double radius = 1.0;
+    std::vector<math::Circle> circles;
+    uint8_t result = calCirclesTangentToLinePoint(line, tangent_point, radius, circles);
+    // 期望结果：两个圆，圆心分别为(2, 1)和(2, -1)，半径为1
+    EXPECT_EQ(result, 2);
+    EXPECT_EQ(circles.size(), 2);
+    EXPECT_NEAR(circles[0].center().x(), 2.0, 1e-6);
+    EXPECT_NEAR(circles[0].center().y(), 1.0, 1e-6);
+    EXPECT_NEAR(circles[0].radius(), 1.0, 1e-6);
+    EXPECT_NEAR(circles[1].center().x(), 2.0, 1e-6);
+    EXPECT_NEAR(circles[1].center().y(), -1.0, 1e-6);
+    EXPECT_NEAR(circles[1].radius(), 1.0, 1e-6);
+  }
+  {
+    // 测试用例2：点不在直线上
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Vec2d tangent_point(2, 1);
+    double radius = 1.0;
+    std::vector<math::Circle> circles;
+    uint8_t result = calCirclesTangentToLinePoint(line, tangent_point, radius, circles);
+    // 期望结果：没有圆
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(circles.size(), 0);
+  }
+}
+
+TEST(GeometryUtilsTest, TestCalCrossPointOfLineAndCircle) {
+  {
+    // 测试用例1：两个交点，交点线段上
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Circle circle(math::Vec2d(2, 0), 1.0);
+    std::vector<PathPt> cross_pt;
+    uint8_t result = calCrossPointOfLineAndCircle(line, circle, cross_pt);
+    EXPECT_EQ(result, 2);
+    EXPECT_EQ(cross_pt.size(), 2);
+    EXPECT_NEAR(cross_pt[0].x(), 3.0, 1e-6);
+    EXPECT_NEAR(cross_pt[0].y(), 0.0, 1e-6);
+    EXPECT_NEAR(cross_pt[1].x(), 1.0, 1e-6);
+    EXPECT_NEAR(cross_pt[1].y(), 0.0, 1e-6);
+  }
+  {
+    // 测试用例2：两个交点，交点都不在线段上
+    math::LineSegment2d line(math::Vec2d(1.5, 0), math::Vec2d(2.5, 0));
+    math::Circle circle(math::Vec2d(2, 0), 1.0);
+    std::vector<PathPt> cross_pt;
+    uint8_t result = calCrossPointOfLineAndCircle(line, circle, cross_pt, true);
+    // 期望结果：有两个交点，但不在线段上，返回0
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(cross_pt.size(), 0);
+  }
+  {
+    // 测试用例2：一个交点
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Circle circle(math::Vec2d(2, 1), 1.0);
+    std::vector<PathPt> cross_pt;
+    uint8_t result = calCrossPointOfLineAndCircle(line, circle, cross_pt, false);
+    // 期望结果：一个交点，坐标为(2, 0)
+    EXPECT_EQ(result, 1);
+    EXPECT_EQ(cross_pt.size(), 1);
+    EXPECT_NEAR(cross_pt[0].x(), 2.0, 1e-6);
+    EXPECT_NEAR(cross_pt[0].y(), 0.0, 1e-6);
+  }
+  {
+    // 测试用例3：无交点
+    math::LineSegment2d line(math::Vec2d(0, 0), math::Vec2d(4, 0));
+    math::Circle circle(math::Vec2d(2, 2), 1.0);
+    std::vector<PathPt> cross_pt;
+    uint8_t result = calCrossPointOfLineAndCircle(line, circle, cross_pt, false);
+    // 期望结果：无交点
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(cross_pt.size(), 0);
+  }
+}
+
+TEST(GeometryUtilsTest, TestSortPointsOnCircle) {
+  {
+    // 测试用例1：空输入
+    math::Circle circle(math::Vec2d(1, 0), 1.0);
+    std::vector<PathPt> points;
+    PathPt base_point(0, 0, 0);
+    sortPointsOnCircle(circle, base_point, points, true);
+    EXPECT_EQ(points.size(), 0);
+  }
+  {
+    // 测试用例2：多个点，顺时针排序
+    math::Circle circle(math::Vec2d(1, 0), 1.0);
+    std::vector<PathPt> points = {PathPt(2, 0, 0), PathPt(1, -1, 0), PathPt(1, 1, 0)};
+    PathPt base_point(0, 0, 0);
+    sortPointsOnCircle(circle, base_point, points, true);
+    EXPECT_EQ(points.size(), 3);
+    EXPECT_NEAR(points[0].x(), 1.0, 1e-6);
+    EXPECT_NEAR(points[0].y(), 1.0, 1e-6);
+    EXPECT_NEAR(points[1].x(), 2.0, 1e-6);
+    EXPECT_NEAR(points[1].y(), 0.0, 1e-6);
+    EXPECT_NEAR(points[2].x(), 1.0, 1e-6);
+    EXPECT_NEAR(points[2].y(), -1.0, 1e-6);
+  }
+  {
+    // 测试用例3：多个点，逆时针排序
+    math::Circle circle(math::Vec2d(1, 0), 1.0);
+    std::vector<PathPt> points = {PathPt(2, 0, 0), PathPt(1, -1, 0), PathPt(1, 1, 0)};
+    PathPt base_point(0, 0, 0);
+    sortPointsOnCircle(circle, base_point, points, false);
+    EXPECT_EQ(points.size(), 3);
+    EXPECT_NEAR(points[0].x(), 1.0, 1e-6);
+    EXPECT_NEAR(points[0].y(), -1.0, 1e-6);
+    EXPECT_NEAR(points[1].x(), 2.0, 1e-6);
+    EXPECT_NEAR(points[1].y(), 0.0, 1e-6);
+    EXPECT_NEAR(points[2].x(), 1.0, 1e-6);
+    EXPECT_NEAR(points[2].y(), 1.0, 1e-6);
+  }
+}
+
+TEST(GeometryUtilsTest, TestGeneratePathOnCircle) {
+  {
+    // 测试用例1：顺时针生成轨迹
+    math::Circle circle(math::Vec2d(1, 0), 1.0);
+    PathPt start_pt(1, 1, 0);
+    PathPt end_pt(1, -1, 0);
+    double step_length = 0.2;
+    std::vector<PathPt> path = generatePathOnCircle(circle, start_pt, end_pt, true, step_length);
+    for (auto &pt : path) {
+      std::cout << "[TEST] GeneratePathOnCircle case1: " << pt.x() << " " << pt.y() << " " << pt.theta() << std::endl;
+    }
+  }
+  {
+    // 测试用例2：逆时针生成轨迹
+    math::Circle circle(math::Vec2d(1, 0), 1.0);
+    PathPt start_pt(1, 1, 0);
+    PathPt end_pt(1, -1, 0);
+    double step_length = 0.2;
+    std::vector<PathPt> path = generatePathOnCircle(circle, start_pt, end_pt, false, step_length);
+    for (auto &pt : path) {
+      std::cout << "[TEST] GeneratePathOnCircle case2: " << pt.x() << " " << pt.y() << " " << pt.theta() << std::endl;
+    }
+  }
+}
+
+TEST(GeometryUtilsTest, TestCalSingleFineTuningAlignPath) {
+  std::cout << "*-------------------------------------------------------------------*" << std::endl;
+  std::cout << "|            【TEST】 CalSingleFineTuningAlignPath begin            |" << std::endl;
+  std::cout << "*-------------------------------------------------------------------*" << std::endl;
+  GeometryPathGenerator path_generator;
+  path_generator.setVehParam(0.947, 3.624, 1.89);
+  {
+    // 测试用例1：向前，车头朝右，左库位，能够完成回正情况
+    std::cout << "*****************    case1    *****************" << std::endl;
+    const PathPt start_pt;
+    const math::LineSegment2d block_boundary(math::Vec2d(4.3, 1.71), math::Vec2d(4.55, -0.54));
+    const math::LineSegment2d block_side_boundary(math::Vec2d(4.3, 1.71), math::Vec2d(-1.39, 1.14));
+    const double radius = 6.2;
+    const math::Vec2d ref_direction = math::Vec2d(4.3, 1.71) - math::Vec2d(-1.39, 1.14);
+    std::vector<PathPt> single_path;
+    bool res = path_generator.calSingleFineTuningAlignPath(start_pt, {block_boundary, block_side_boundary}, radius,
+                                                           ref_direction, 0.0, single_path);
+    std::cout << "res: " << res << std::endl;
+    for (auto &pt : single_path) {
+      std::cout << "pt: " << pt.x() << " " << pt.y() << " " << pt.theta() << std::endl;
+    }
+    EXPECT_EQ(res, true);
+    EXPECT_NEAR(single_path.front().x(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.front().y(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.back().x(), 0.617997, 1e-6);
+    EXPECT_NEAR(single_path.back().y(), 0.0308769, 1e-6);
+  }
+  {
+    // 测试用例2：向前，车头朝右，左库位，不能够完成回正情况
+    std::cout << "*****************    case2    *****************" << std::endl;
+    const PathPt start_pt;
+    const math::LineSegment2d block_boundary(math::Vec2d(3.82, 1.56), math::Vec2d(4.17, -1.42));
+    const math::LineSegment2d block_side_boundary(math::Vec2d(3.82, 1.56), math::Vec2d(-1.39, 1.14));
+    const double radius = 6.2;
+    const math::Vec2d ref_direction = math::Vec2d(4.3, 1.71) - math::Vec2d(-1.39, 1.14);
+    std::vector<PathPt> single_path;
+    bool res = path_generator.calSingleFineTuningAlignPath(start_pt, {block_boundary, block_side_boundary}, radius,
+                                                           ref_direction, 0.0, single_path);
+    std::cout << "res: " << res << std::endl;
+    for (auto &pt : single_path) {
+      std::cout << "pt: " << pt.x() << " " << pt.y() << " " << pt.theta() << std::endl;
+    }
+    EXPECT_EQ(res, false);
+    EXPECT_NEAR(single_path.front().x(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.front().y(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.back().x(), 0.29651, 1e-6);
+    EXPECT_NEAR(single_path.back().y(), 0.00709424, 1e-6);
+  }
+  {
+    // 测试用例3：向前，车头朝右，左库位，被block住
+    std::cout << "*****************    case3    *****************" << std::endl;
+    const PathPt start_pt;
+    const math::LineSegment2d block_boundary(math::Vec2d(3.45, -1.48), math::Vec2d(3.75, -1.3));
+    const math::LineSegment2d block_side_boundary(math::Vec2d(3.45, -1.48), math::Vec2d(-1.39, 1.14));
+    const double radius = 6.2;
+    const math::Vec2d ref_direction = math::Vec2d(4.3, 1.71) - math::Vec2d(-1.39, 1.14);
+    std::vector<PathPt> single_path;
+    bool res = path_generator.calSingleFineTuningAlignPath(start_pt, {block_boundary, block_side_boundary}, radius,
+                                                           ref_direction, 0.0, single_path);
+    std::cout << "res: " << res << std::endl;
+    for (auto &pt : single_path) {
+      std::cout << "pt: " << pt.x() << " " << pt.y() << " " << pt.theta() << std::endl;
+    }
+    EXPECT_EQ(res, false);
+  }
+
+  {
+    // 测试用例4：向后，车头朝右，左库位，不能够完成回正情况
+    std::cout << "*****************    case4    *****************" << std::endl;
+    const PathPt start_pt;
+    const math::LineSegment2d block_boundary(math::Vec2d(-1.39, 1.14), math::Vec2d(-1.18, -1.145));
+    const math::LineSegment2d block_side_boundary(math::Vec2d(4.3, 1.71), math::Vec2d(-1.39, 1.14));
+    const double radius = 6.2;
+    const math::Vec2d ref_direction = math::Vec2d(-1.39, 1.14) - math::Vec2d(4.3, 1.71);
+    std::vector<PathPt> single_path;
+    bool res = path_generator.calSingleFineTuningAlignPath(start_pt, {block_boundary, block_side_boundary}, radius,
+                                                           ref_direction, 0.0, single_path);
+    std::cout << "res: " << res << std::endl;
+    for (auto &pt : single_path) {
+      std::cout << "pt: " << pt.x() << " " << pt.y() << " " << pt.theta() << std::endl;
+    }
+    EXPECT_EQ(res, false);
+    EXPECT_NEAR(single_path.front().x(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.front().y(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.back().x(), -0.292353, 1e-6);
+    EXPECT_NEAR(single_path.back().y(), -0.00689661, 1e-6);
+  }
+  {
+    // 测试用例5：向后，车头朝左，左库位，不能够完成回正情况
+    std::cout << "*****************    case5    *****************" << std::endl;
+    const PathPt start_pt;
+    const math::LineSegment2d block_boundary(math::Vec2d(-1.24, 1.6), math::Vec2d(-1.56, -0.936));
+    const math::LineSegment2d block_side_boundary(math::Vec2d(-1.24, 1.6), math::Vec2d(4.03, 1.14));
+    const double radius = 6.2;
+    const math::Vec2d ref_direction = math::Vec2d(-1.24, 1.6) - math::Vec2d(4.03, 1.14);
+    std::vector<PathPt> single_path;
+    bool res = path_generator.calSingleFineTuningAlignPath(start_pt, {block_boundary, block_side_boundary}, radius,
+                                                           ref_direction, 0.0, single_path);
+    std::cout << "res: " << res << std::endl;
+    for (auto &pt : single_path) {
+      std::cout << "pt: " << pt.x() << " " << pt.y() << " " << pt.theta() << std::endl;
+    }
+    EXPECT_EQ(res, false);
+    EXPECT_NEAR(single_path.front().x(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.front().y(), 0.0, 1e-6);
+    EXPECT_NEAR(single_path.back().x(), -0.434152, 1e-6);
+    EXPECT_NEAR(single_path.back().y(), 0.0152193, 1e-6);
+  }
+  std::cout << "*-------------------------------------------------------------------*" << std::endl;
+  std::cout << "|            【TEST】 CalSingleFineTuningAlignPath end              |" << std::endl;
+  std::cout << "*-------------------------------------------------------------------*" << std::endl;
+}
+
+TEST(GeometryUtilsTest, TestCalFineTuningPathInsideParallelSlot) {
+  std::cout << "*-------------------------------------------------------------------------*" << std::endl;
+  std::cout << "|            【TEST】 CalFineTuningPathInsideParallelSlot begin            |" << std::endl;
+  std::cout << "*-------------------------------------------------------------------------*" << std::endl;
+  GeometryPathGenerator path_generator;
+  path_generator.setVehParam(0.947, 3.624, 1.89);
+  {
+    // 测试用例1：向前，车头朝右，左库位，不能够完成回正情况
+    std::cout << "*****************    case1    *****************" << std::endl;
+    const Slot slot({PathPt(4.23, 0.49, 0), PathPt(-0.94, -1.32, 0), PathPt(-1.86, 1.1, 0), PathPt(3.18, 3.08, 0)},
+                    Slot::SlotType::PARALLEL, Slot::SlotDirec::LEFT);
+    const PathPt start_pt;
+    const double radius = 6.2;
+    const int max_fine_tuning_num = 10;
+    std::vector<std::vector<PathPt>> fine_tuning_paths;
+    bool res = path_generator.calFineTuningPathInsideParallelSlot(slot, start_pt, radius, max_fine_tuning_num,
+                                                                  fine_tuning_paths);
+    std::cout << "res: " << res << std::endl;
+    for (auto &pt : slot.corners()) {
+      std::cout << "slot_corner: corner.x = " << pt.x() << " corner.y = " << pt.y() << std::endl;
+    }
+    for (auto &path : fine_tuning_paths) {
+      std::cout << "_______________________________" << std::endl;
+      for (auto &pt : path) {
+        std::cout << "tractor_flu_path " << pt.x() << " " << pt.y() << " " << pt.theta() * RAD2ANG << " " << pt.kappa()
+                  << " " << pt.s() << " " << (int)pt.direction() << std::endl;
+      }
+    }
+    EXPECT_EQ(res, true);
+  }
+  std::cout << "*-------------------------------------------------------------------------*" << std::endl;
+  std::cout << "|            【TEST】 CalFineTuningPathInsideParallelSlot end             |" << std::endl;
+  std::cout << "*-------------------------------------------------------------------------*" << std::endl;
+}
+}  // namespace gpal::pnc::planning

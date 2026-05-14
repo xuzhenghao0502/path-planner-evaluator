@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message OsqpConfig {
+  enum LinearSovler {
+    QDLDL_SOLVER = 0;
+    MKL_PARDISO_SOLVER = 1;
+  }
+  optional double rho = 1 [default = 0.1];
+  optional double sigma = 2 [default = 1e-6];
+  optional int32 max_iter = 3 [default = 4000];
+  optional double eps_abs = 4 [default = 1e-3];
+  optional double eps_rel = 5 [default = 1e-3];
+  optional double eps_prim_inf = 6 [default = 1e-4];
+  optional double eps_dual_inf = 7 [default = 1e-4];
+  optional double alpha = 8 [default = 1.6];
+  optional LinearSovler linsys_solver = 9 [default = QDLDL_SOLVER];
+  optional double delta = 10 [default = 1e-6];
+  optional bool polish = 11 [default = false];
+  optional int32 polish_refine_iter = 12 [default = 3];
+  optional bool verbose = 13 [default = true];
+  optional bool scaled_termination = 14 [default = false];
+  optional int32 check_termination = 15 [default = 25];
+  optional bool warm_start = 16 [default = true];
+  optional int32 scaling = 17 [default = 10];
+  optional bool adaptive_rho = 18 [default = true];
+  optional int32 adaptive_rho_interval = 19 [default = 0];
+  optional int32 adaptive_rho_tolerance = 20 [default = 5];
+  optional double adaptive_rho_fraction = 21 [default = 0.4];
+  optional double time_limit = 22 [default = 0];
+}

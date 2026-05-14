@@ -1,0 +1,240 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message FineTuneConfig {
+  optional bool enable                                    = 1 [default = false];
+  optional double stop_distance_buffer                    = 2 [default = 1.0];   // m
+  optional double fine_tune_distance                      = 3 [default = 15.0];  // m
+  optional int32 max_fine_tune_count                      = 4 [default = 2];
+  optional double rear_first_parking_longit_threshold     = 5 [default = 0.5];  // m
+  optional double rear_first_parking_lateral_threshold    = 6 [default = 1.5];  // m
+  optional double rear_first_parking_angle_diff_threshold = 7 [default = 20];   // deg
+  optional double head_first_parking_longit_threshold     = 8 [default = 0.5];  // m
+  optional double head_first_parking_lateral_threshold    = 9 [default = 3.0];  // m
+  optional double head_first_parking_angle_diff_threshold = 10 [default = 20];  // deg
+
+  optional bool enable_follow_up = 15 [default = false];
+}
+
+message ParkingReplanConfig {
+  optional bool enable_replan              = 1 [default = false];
+  optional bool enable_shift_trigger       = 2 [default = false];
+  optional bool enable_forced_stop_trigger = 3 [default = false];
+  optional bool enable_slot_update_trigger = 4 [default = false];
+
+  optional double shift_trigger_lateral_deviation_threshold       = 6 [default = 0.15];  // m
+  optional double shift_trigger_angle_deviation_threshold         = 7 [default = 10];    // deg
+  optional double slot_update_trigger_angle_deviation_threshold   = 8 [default = 3];     // deg
+  optional double slot_update_trigger_lateral_deviation_threshold = 9 [default = 0.03];  // m
+  optional double slot_update_trigger_longti_deviation_threshold  = 10 [default = 0.2];  // m
+  optional int32 forced_stop_trigger_time_threshold               = 11 [default = 30];
+  optional int32 forced_stop_cancel_time_threshold                = 12 [default = 20];
+
+  optional int32 shift_replan_num_limit       = 15 [default = 1];
+  optional int32 forced_stop_replan_num_limit = 16 [default = 2];
+  optional int32 slot_update_replan_num_limit = 17 [default = 1];
+
+  optional bool enable_geometric_replan                       = 20 [default = false];
+  optional double geometric_replan_dis_threshold              = 21 [default = 2.0];   // m
+  optional double geometric_replan_angle_threshold            = 22 [default = 30.0];  // deg
+  optional GeometricFineTuneConfig geometric_fine_tune_config = 23;
+}
+
+message PathBlockFsConfig {
+  optional bool enable_fs_collision_check   = 1 [default = false];
+  optional double collision_check_buffer    = 2 [default = 0.0];
+  optional double corner_width              = 3 [default = 0.0];
+  optional bool enable_curve_decide_process = 4 [default = false];
+  optional double curve_kappa_thresold      = 5 [default = 0.0];
+  optional double curve_look_ahead_distance = 6 [default = 0.0];
+  optional double side_box_length           = 7 [default = 0.0];
+  optional double side_box_width            = 8 [default = 0.0];
+}
+
+message ParkingFailureIndicators {
+  optional double parking_max_time_consuming  = 1 [default = 300.0];  // s
+  optional int32 parking_max_gear_shift_times = 2 [default = 12];
+}
+
+message GeometricConnectConfig {
+  optional bool enable_parallel_park_traj_end_extend             = 1 [default = false];
+  optional double parallel_park_traj_end_extend_max_dis          = 2 [default = 2.0];  // m
+  optional double parallel_park_traj_end_extend_min_dis          = 3 [default = 1.0];  // m
+  optional double parallel_park_traj_end_extend_width_safe_buff  = 4 [default = 0.2];  // m
+  optional double parallel_park_traj_end_extend_length_safe_buff = 5 [default = 0.5];  // m
+}
+
+message TrajectoryPostProcessConfig {
+  optional bool enable_straight_line_at_gear_shift       = 1 [default = false];
+  optional double straight_line_max_length_at_gear_shift = 2 [default = 0.3];  // m
+  optional double width_safe_buff                        = 3 [default = 0.2];  // m
+  optional double length_safe_buff                       = 4 [default = 0.5];  // m
+
+  optional bool enable_modify_last_segment_traj = 6 [default = false];
+  optional double modify_length                 = 7 [default = 0.3];  // m
+
+  optional double last_segment_splice_straight_line_length = 11 [default = 0.0];  // m
+}
+
+message CustomBoundaryConfig {
+  optional bool enable_custom_boundary          = 1 [default = false];
+  optional bool enable_custom_obstacle_boundary = 2 [default = false];
+  optional bool enable_custom_virtual_boundary  = 3 [default = false];
+  optional bool enable_map_boundary             = 4 [default = false];
+
+  optional double roadside_gap   = 6 [default = 0.1];  // m
+  optional double both_sides_gap = 7 [default = 0.2];  // m
+  optional double aisle_gap      = 8 [default = 7.5];  // m
+  optional double top_gap        = 9 [default = 0.5];  // m
+
+  optional double aisle_width_threshold = 11 [default = 5.3];  // m
+  optional double push_gap              = 12 [default = 0.3];  // m
+
+  optional double map_boundary_rear_range  = 16 [default = 5.0];   // m
+  optional double map_boundary_front_range = 17 [default = 25.0];  // m
+}
+
+message GeometricFineTuneConfig {
+  optional double radius                       = 1 [default = 7.0];  // m
+  optional int32 max_shift_num                 = 2 [default = 10];
+  optional double short_path_length            = 3 [default = 0.5];  // m
+  optional double short_path_extend_max_length = 4 [default = 2.0];  // m
+}
+
+message ParkCompletionConfig {
+  optional double dis_2_end_pose                 = 1 [default = 0.0];   // m
+  optional double l_2_reference_line             = 2 [default = 0.5];   // m
+  optional double heading_error_2_reference_line = 3 [default = 15.0];  // deg
+}
+
+message ParkEnvRecogConfig {
+  optional bool enable_park_env_recognizer = 1 [default = false];
+
+  optional double sample_step       = 6 [default = 0.5];
+  optional int32 sample_num         = 7 [default = 8];
+  optional double sample_box_width  = 8 [default = 3.0];
+  optional double sample_box_length = 9 [default = 3.0];
+}
+
+message SlotCorrectionConfig {
+  optional bool enable_slot_correction = 1 [default = false];
+
+  optional int32 explore_max_longit_num = 6 [default = 10];
+  optional double explore_longit_step = 7 [default = 0.2];  // m
+  optional int32 explore_max_lateral_num = 8 [default = 5];
+  optional double explore_lateral_step = 9 [default = 0.2];  // m
+  optional int32 explore_extra_lateral_num = 10 [default = 0];
+
+  optional double forward_safe_dist_threshold  = 11 [default = 1.0];  // m
+  optional double backward_safe_dist_threshold = 12 [default = 1.0];  // m
+  optional double lateral_safe_dist_threshold  = 13 [default = 0.5];  // m
+}
+
+message DynamicSearchConfig {
+  optional bool enable_dynamic_search = 1 [default = false];
+  optional double preview_dis         = 2 [default = 2.0];  // m
+}
+
+message EndRegionConfig {
+  optional bool enable_end_region = 1 [default = false];
+  optional double end_region_front_range  = 6 [default = 7.0];  // m
+  optional double end_region_back_range  = 7 [default = 2.0];  // m  
+  optional double end_region_width_range  = 8 [default = 2.0];  // m
+  optional double end_region_heading_tolerance = 9 [default = 5.0];  // deg
+}
+
+message EndPointSelectConfig {
+  optional bool enable_end_pose_select = 1 [default = true];
+
+  optional int32 explore_max_longit_num  = 6 [default = 5];
+  optional double explore_longit_step    = 7 [default = 1.0];  // m
+  optional int32 explore_max_lateral_num = 8 [default = 12];
+  optional double explore_lateral_step   = 9 [default = 0.3];  // m
+
+  optional double longit_safe_dist_threshold  = 11 [default = 1.0];  // m
+  optional double lateral_safe_dist_threshold = 12 [default = 1.0];  // m
+
+  optional double vertical_end_point_longit_threshold  = 16 [default = 1.0];  // m
+  optional double vertical_end_point_lateral_threshold = 17 [default = 5.0];  // m
+  optional double horizon_end_point_longit_threshold   = 18 [default = 2.0];  // m
+  optional double horizon_end_point_lateral_threshold  = 19 [default = 1.0];  // m
+}
+
+message ParkingPathGeneratorProfile {
+  enum GeneratorType {
+    HYBRID_A_STAR     = 0;
+    GEOMETRY          = 1;
+    UNKNOWN_GENERATOR = 100;
+  };
+  optional bool enable       = 1 [default = false];
+  optional double timeout_ms = 2 [default = 10.0];
+}
+
+message ParkingPathOptimizerProfile {
+  enum OptimizerType {
+    IPM_OCP           = 0;
+    UNKNOWN_OPTIMIZER = 100;
+  };
+  optional bool enable                    = 1 [default = false];
+  optional bool consider_bound            = 10 [default = false];
+  optional double timeout_ms              = 19 [default = 10.0];
+  optional bool enable_scenario_optimizer = 37 [default = false];
+  optional bool is_segmented_optimization = 38 [default = true];
+}
+
+message PlannerProfile {
+  optional bool enable                                  = 1 [default = false];
+  optional double shift_min_dis_require                 = 2 [default = 1.0];  // m
+  optional bool enable_decision_object                  = 3 [default = false];
+  optional double park_completion_longit_pose_offset    = 5 [default = 0.3];   // m
+  optional double decision_object_distance_filter       = 6 [default = 10.0];  // m
+  optional string search_model_name                     = 7 [default = "regular"];
+  optional float parkin_stop_speed                      = 8 [default = 0.15];  // kph
+  optional bool enable_reoptimize_at_shift              = 9 [default = false];
+  optional double parkout_endpt_ref_dis                 = 10 [default = 8.0];   // m
+  optional double parkout_special_endpt_ref_dis         = 11 [default = 20.0];  // m
+  optional double parkout_gate_endpt_ref_dis            = 12 [default = 4.5];  // m
+  optional double search_end_pose_offset                = 13 [default = 2.0];   // m
+  optional bool enable_realtime_refine                  = 14 [default = false];
+  optional double escape_task_destination_dis_threshold = 15 [default = 5.0];  // m
+
+  map<string, ParkingPathGeneratorProfile> generator_profiles         = 21;
+  map<string, ParkingPathOptimizerProfile> optimizer_profiles         = 22;
+  optional FineTuneConfig fine_tune_config                            = 26;
+  optional PathBlockFsConfig path_block_fs_config                     = 27;
+  optional ParkingFailureIndicators parking_failure_indicators        = 28;
+  optional GeometricConnectConfig geometric_connect_config            = 29;
+  optional ParkingReplanConfig parking_replan_config                  = 30;
+  optional TrajectoryPostProcessConfig trajectory_post_process_config = 31;
+  optional CustomBoundaryConfig custom_boundary_config                = 32;
+  optional ParkCompletionConfig park_completion_config                = 33;
+  optional ParkEnvRecogConfig park_env_recog_config                   = 34;
+  optional SlotCorrectionConfig slot_correction_config                = 35;
+  optional DynamicSearchConfig dynamic_search_config                  = 36;
+  optional EndPointSelectConfig end_point_select_config               = 37;
+  optional EndRegionConfig end_region_config                          = 38;
+}
+
+message ParkingPathPlannerProfile {
+  enum ParkingMode {
+    PARALLEL_IN          = 0; // 垂直泊入
+    VERTICAL_IN          = 1; // 水平泊入
+    PARALLEL_OUT         = 2; // 垂直泊出
+    VERTICAL_OUT         = 3; // 水平泊出
+    ESCAPE               = 4; // 脱困
+    UNKNOWN_PARKING_MODE = 100; // 未知
+  };
+  map<string, PlannerProfile> planner_profiles = 1;
+}
+
+message ParkingPathPlannerConfig {
+  enum ParkingType {
+    AVP                  = 0; // 全自动泊车（AVP, Autonomous Valet Parking）
+    RPA                  = 1; // 遥控泊车（RPA, Remote Parking Assist）
+    HPP                  = 2; // 记忆泊车（HPP, Home Parking Pilot）
+    APA                  = 3; // 自动泊车辅助（APA, Automated Parking Assist）
+    UNKNOWN_PARKING_TYPE = 100;
+  };
+  map<string, ParkingPathPlannerProfile> profiles = 1;
+}

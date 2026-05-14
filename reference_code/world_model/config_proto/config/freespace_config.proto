@@ -1,0 +1,23 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message GridData {
+  optional int32 map_length = 1 [default = 800];  // 二维地图长度
+  optional int32 map_width = 2 [default = 400];   // 二维地图宽度
+  optional int32 origin_x = 3 [default = 200];    // HDT 200, AIV 400 地图中车辆原点x坐标
+  optional int32 origin_y = 4 [default = 200];    // 地图中车辆原点y坐标
+  optional float resolution = 5 [default = 0.1];
+  optional float force_bottom_boundary = 6 [default = 10.0];
+
+  // 泊车任务中使用
+  optional int32 park_map_length = 11 [default = 400];  // 二维地图长度
+  optional int32 park_map_width = 12 [default = 400];   // 二维地图宽度
+  optional int32 park_origin_x = 13 [default = 100];    // MDT 100, AIV 200 地图中车辆原点x坐标
+  optional int32 park_origin_y = 14 [default = 200];    // 地图中车辆原点y坐标
+  optional float park_resolution = 15 [default = 0.2];
+}
+
+message FreespaceConfig {
+  optional GridData grid_data = 1;
+}

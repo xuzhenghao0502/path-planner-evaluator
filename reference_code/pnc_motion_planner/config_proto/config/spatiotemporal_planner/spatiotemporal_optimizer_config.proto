@@ -1,0 +1,152 @@
+syntax = "proto2";
+
+import "config/ipm_config.proto";
+import "config/path_planner/ocp_path_optimizer_config.proto";
+import "config/spatiotemporal_planner/spatiotemporal_manager_config.proto";
+import "config/optimizer_common_config.proto";
+
+package gpal.pnc.planning;
+
+
+
+message SpatiotemporalOptimizerParam {
+  optional string key = 1;
+  optional double value = 2;
+  oneof property {
+    string range_key = 3;
+    AttenuationParam attenuation = 4;
+  }
+}
+
+message SpatiotemporalOptimizerWeight {
+  optional double prev_steer = 3;
+  optional double prev_dsteer = 4;
+  optional double l_ref_weight = 5 [default = 1.0];
+  optional double theta_ref_weight = 6 [default = 1.0];
+  optional double s_coarse_weight = 7 [default = 1.0];
+  optional double v_coarse_weight = 8 [default = 1.0];
+  optional double a_weight = 9 [default = 1.0];
+  optional double obs_weight = 10 [default = 5.0];
+  optional double obs_avoided_bound = 15 [default = 1.1];
+  optional double gamma_weight_prev_steer = 20 [default = 0.9];
+  optional double terminal_l_weight = 30 [default = 1.0];
+  optional double terminal_s_weight = 31 [default = 1.0];
+  optional double terminal_v_weight = 32 [default = 1.0];
+  optional double terminal_theta_weight = 33 [default = 1.0];
+}
+
+message ScaleParam {
+  optional double s_scale = 1 [default = 20.0];
+  optional double v_scale = 2 [default = 10.0];
+  optional double a_scale = 3 [default = 5.0];
+  optional double jerk_scale = 4 [default = 5.0];
+  optional double l_scale = 5 [default = 1.0];
+  optional double theta_scale = 6 [default = 1.0];
+  optional double steer_scale = 7 [default = 1.0];
+  optional double dsteer_scale = 8 [default = 1.0];
+}
+
+
+message SpatiotemporalOptimizerContext {
+  optional string model = 1;
+  repeated SpatiotemporalOptimizerParam default_params = 2;
+  repeated SpatiotemporalOptimizerParam piecewise_params = 3;
+  repeated SpatiotemporalOptimizerParam ranged_params = 4;
+  repeated SpatiotemporalOptimizerParam attenuation_params = 5;
+  optional SpatiotemporalOptimizerWeight weights = 11;
+  optional ScaleParam scale_param = 12;
+  optional IPMConfig ipm_config = 15;
+  optional bool enb_edge_barrier_bound = 20 [default = true];
+  optional bool enb_edge_soft_bound = 21 [default = true];
+}
+
+message LaneKeepStartSParam {
+  optional float lane_keep_start_time = 1 [default = 7.0];
+  optional float lane_change_time_lower = 2 [default = 3.0];
+  optional float lane_change_time_upper = 3 [default = 5.5];
+  optional float lane_change_velocity_lower = 4 [default = 8.0];
+  optional float lane_change_velocity_upper = 5 [default = 23.0];
+  optional bool enable_adaptive_lane_change_time = 6 [default = false];
+  optional float lane_keep_lat_acc = 7 [default = 0.3];
+}
+
+message CollisionCheckParam {
+  optional float lateral_buffer = 1 [default = 0.1];
+  optional float longitudinal_buffer = 2 [default = 0.5];
+  optional float min_time_headway = 3 [default = 0.8];
+  optional float min_distance_for_interaction = 4 [default = 2.0];
+  optional float ttc_for_interaction = 5 [default = 1.0];
+  optional float safe_thw_for_interaction = 6 [default = 0.5];
+  optional float static_obs_speed_thres = 7 [default = 0.5];
+}
+
+message EllipseAdjustParam {
+  optional double n_std = 1 [default = 3.0];
+  optional double ang_a_min_factor = 2 [default = 0.6];
+  optional double ang_a_max_factor = 3 [default = 1.0];
+  optional double ang_b_min_factor = 4 [default = 1.0];
+  optional double ang_b_max_factor = 5 [default = 1.3];
+}
+
+
+message SpatiotemporalOptimizerProfile {
+  optional double sample_inteval = 1 [default = 1.0];
+  optional bool force_cv_model = 2 [default = false];
+  map<string, SpatiotemporalOptimizerContext> context = 11;
+  optional IPMConfig ipm_config = 21;
+  optional bool use_auto_update_param = 22 [default = true];
+  optional bool use_u_guess = 23 [default = false];
+  optional bool eable_resolve = 24 [default = false];
+  optional bool eable_result_check = 25 [default = true];
+
+  map<string, int32> tag_priority = 31;
+  optional double valid_tol = 32 [default = 0.1];
+  optional double valid_tol_for_l_slack = 33 [default = 1.0];
+  optional int32 resolve_max_num = 34 [default = 3];
+  optional int32 timeout_ms = 35 [default = 20];
+  optional int32 hard_bound_num = 36 [default = 18];
+
+  optional LateralAccLimitForRadius lateral_acc_limit_for_radius = 52;
+  optional double default_max_soft_acc = 53 [default = 1.0];
+  optional double merge_max_soft_acc = 54 [default = 0.6];
+  optional double lane_change_max_soft_acc = 55 [default = 0.4];
+  optional LaneKeepStartSParam lane_keep_start_s_param = 70;
+  optional double cost_weight_max_decay_length = 71 [default = 100.0];
+  optional bool enable_conflict_area = 72 [default = false];
+  optional double conflict_end_time = 73 [default = 3.0];
+
+  optional CollisionCheckParam collision_check_param = 85;
+
+  optional OneDimensionalTable speed_steer_cofficient_table = 90;
+  optional OneDimensionalTable speed_dsteer_cofficient_table = 91;
+  optional MultiElementOneDimensionalTable lane_change_params_table = 92;
+
+  optional EllipseAdjustParam ellipse_adjust_param = 100;
+
+  optional bool enable_use_decision_lane_change_point = 110 [default = false];
+  optional bool enable_jerk_adjust_base_ttc = 111 [default = true];
+
+  optional double destination_reachable_thres = 120 [default = -1.0];
+  optional double destination_reached_forhead_buffer = 121 [default = 5.0];
+  optional double emergency_break_acc_thres = 122 [default = 3.0];
+  optional double vehicle_start_acc_thres = 123 [default = 0.5];
+  optional double gate_stop_thres = 124 [default = 5.0];
+  optional float end_lateral_error_threshold = 125 [default = 2.0];  // m 终点与参考线横向偏差阈值
+  optional float end_heading_error_threshold = 126 [default = 0.5];  // rad 终点与参考线航向偏差阈值
+
+  optional bool enable_get_l_offset = 130 [default = false];
+  optional double get_l_offset_thres = 131 [default = 0.5];
+  optional double get_l_offset_diff_s_thres = 132 [default = 2.0];
+  optional double get_l_offset_min_v = 133 [default = 5.0];
+  optional double permissible_once_l_offset = 134 [default = 0.5];
+}
+
+message SpatiotemporalOptimizerConfig {
+  optional SpatioTemporalManagerConfig manager = 1;
+  optional SpatiotemporalOptimizerProfile profiles  = 2;
+}
+
+// 参数列表容器
+message SpatiotemporalOptimizerConfigList {
+  repeated SpatiotemporalOptimizerConfig entries = 1;
+}

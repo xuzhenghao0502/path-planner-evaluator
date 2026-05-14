@@ -1,0 +1,57 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+import "config/spatiotemporal_planner/spatiotemporal_manager_config.proto";
+
+message LongitudinalBoundParserProfile {
+
+  optional double lateral_acc_limit_for_radius_1000 = 1 [default = 1.2]; 
+  optional double lateral_acc_limit_for_radius_500 = 2 [default = 1.3];
+  optional double lateral_acc_limit_for_radius_250 = 3 [default = 1.4]; 
+  optional double lateral_acc_limit_for_radius_100 = 4 [default = 1.5];
+  optional double lateral_acc_limit_for_radius_50 = 5 [default = 1.5];
+  optional double lateral_acc_limit_for_radius_20 = 6 [default = 1.6];
+  optional double lateral_acc_limit_for_radius_10 = 7 [default = 1.6];
+
+  optional double min_curve_speed_limit = 8 [default = 10.0];
+  optional double soft_curve_acc = 9 [default = 1.0];
+
+  optional double max_speed_limit = 10 [default = 130.0];
+
+  optional double overspeed_min_acc_limit_threshold = 11 [default = -0.2];
+  optional double out_curve_consider_back_distance = 12 [default = 15.0];
+  optional double out_curve_consider_curve_threshold = 13 [default = 0.015];
+  optional double steer_acc_limit_threshold = 14 [default = 10.0];
+  optional double release_steer_acc_limit_threshold = 15 [default = 4.0];
+
+  optional bool allow_exceed_stop_line = 16 [default = false];
+
+  optional double turn_speed_limit = 17 [default = 15];
+  optional double u_turn_speed_limit = 18 [default = 12];
+  optional bool enable_turn_accelerate_limit = 19 [default = true];
+
+  optional double hpa_speed_limit = 20 [default = 130.0];
+  optional double remain_dis_buffer = 21 [default = 1.0];
+
+  optional bool enable_gate_fs_ignore = 22 [default = false];
+  optional float block_s_ignore_range = 23 [default = 1.0];
+  optional float block_s_safe_distance = 24 [default = 3.0];
+
+  optional double forward_speed_limit_buffer = 25 [default = 15.0];
+
+  optional float turn_forward_range = 26 [default = 70.0];
+  optional float turn_back_range = 27 [default = 15.0];
+
+  optional bool enable_local_path_check = 100 [default = false];
+}
+
+message LongitudinalBoundParserConfig {
+  optional SpatioTemporalManagerConfig manager = 1;
+  optional LongitudinalBoundParserProfile profiles  = 2;
+}
+
+// 参数列表容器
+message LongitudinalBoundParserConfigList {
+  repeated LongitudinalBoundParserConfig entries = 1;
+}

@@ -1,0 +1,76 @@
+syntax = "proto2";
+
+import "config/ipm_config.proto";
+import "config/optimizer_common_config.proto";
+
+package gpal.pnc.planning;
+
+message OcpPathOptimizerParam {
+  optional string key = 1;
+  optional double value = 2;
+  oneof property {
+    string range_key = 3;
+    AttenuationParam attenuation = 4;
+  }
+}
+
+message OcpPathOptimizerWeight {
+  optional double prev_kappa = 1;
+  optional double prev_dkappa = 2;
+  optional double prev_steer = 3;
+  optional double gamma_weight_prev_steer = 4 [default = 0.9];
+  optional double prev_dsteer = 5;
+  optional double l_ref_weight_piecewise = 6 [default = 1.0];
+}
+
+message OcpPathOptimizerConstraint {
+  optional double max_kappa = 1 [default = 0.1];
+  optional double centr_acc = 2 [default = 1.0];  // centripetal acceleration, used for kappa bound
+  optional double decel = 3 [default = 0.5];  // centripetal acceleration, used for kappa bound
+  optional double min_v = 4 [default = 1.0];
+  optional double max_dkappa = 5 [default = 0.03];
+}
+
+message OcpPathOptimizerProfile {
+  optional string model = 1;
+  repeated OcpPathOptimizerParam default_params = 2;
+  repeated OcpPathOptimizerParam piecewise_params = 3;
+  repeated OcpPathOptimizerParam ranged_params = 4;
+  repeated OcpPathOptimizerParam attenuation_params = 5;
+  repeated OcpPathOptimizerParam unconstrained_params = 6;
+  optional OcpPathOptimizerConstraint constraint = 10;
+  optional OcpPathOptimizerWeight weights = 11;
+  optional IPMConfig ipm_config = 15;
+  optional bool enb_edge_barrier_bound = 20 [default = true];
+  optional bool enb_edge_soft_bound = 21 [default = true];
+}
+
+
+
+message LateralAccLimitForRadius{
+    optional double lateral_acc_limit_for_radius_1000 = 1 [default = 1.2];
+    optional double lateral_acc_limit_for_radius_500 = 2 [default = 0.7];
+    optional double lateral_acc_limit_for_radius_250 = 3 [default = 0.5];
+    optional double lateral_acc_limit_for_radius_100 = 4 [default = 0.45];
+    optional double lateral_acc_limit_for_radius_50 = 5 [default = 0.4];
+    optional double lateral_acc_limit_for_radius_20 = 6 [default = 0.68];
+    optional double lateral_acc_limit_for_radius_10 = 7 [default = 0.65];
+}
+
+message OcpPathOptimizerConfig {
+  optional double sample_inteval = 1 [default = 1.0];
+  optional bool force_cv_model = 2 [default = false];
+  map<string, OcpPathOptimizerProfile> profiles = 11;
+  map<string, OcpPathOptimizerProfile> protect_path_profiles = 12;
+  optional IPMConfig ipm_config = 21;
+  optional IPMConfig protect_path_ipm_config = 22;
+  map<string, int32> tag_priority = 31;
+  optional double valid_tol = 32 [default = 0.1];
+  optional int32 resolve_max_num = 33 [default = 3];
+  optional SpeedSteerAngleBoundMap steering_angle_bound_map = 50;
+  optional SpeedKappaBoundMap speed_kappa_bound_map = 51;
+  optional LateralAccLimitForRadius lateral_acc_limit_for_radius = 52;
+  optional double cost_weight_max_decay_length = 60 [default = 100.0];
+  optional double aim_horizon_time = 61 [default = 2.0];
+  optional bool enable_use_aim_horizon_time = 62 [default = false];
+}

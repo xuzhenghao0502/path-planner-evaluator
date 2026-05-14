@@ -1,0 +1,49 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+import "config/base_object_parser_config.proto";
+
+message LateralPathBoundFilterConfig {
+  optional double filter_in  = 1 [default = 0.9];
+  optional double filter_out = 2 [default = 0.1];
+}
+
+
+// 横向 path bound 解析器基础类型（ObjectInfo、TypeLateralDistPair 等）
+message BaseLateralPathBoundParserProfile {
+  message ObjectInfo {
+    optional double barrier_lateral_safe_distance = 1 [default = 0.0];
+    optional double soft_lateral_safe_distance    = 2 [default = 0.0];
+    optional double coff_a                        = 3 [default = 0.0];
+    optional double coff_b                        = 4 [default = 0.0];
+    optional double coff_c_min                    = 5 [default = 0.0];
+    optional double lateral_safe_distance         = 6 [default = 0.0];
+  }
+
+  message TypeLateralDistPair {
+    optional BaseObjectParserConfig.ObjectType obs_type = 1;
+    optional ObjectInfo obs_info                        = 2;
+  }
+
+  message TypeLateralDistPairs {
+    repeated TypeLateralDistPair type_lateral_dist_pair = 1;
+  }
+
+  message SpeedDecisionBoundBufferMap {
+    message Element {
+      optional double speed  = 1;
+      optional double buffer = 2;
+    }
+    repeated Element elements = 1;
+  }
+
+  message SpeedLongitBoundBufferMap {
+    message Element {
+      optional double speed        = 1;
+      optional double start_buffer = 2;
+      optional double end_buffer   = 3;
+    }
+    repeated Element elements = 1;
+  }
+}

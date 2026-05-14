@@ -1,0 +1,67 @@
+syntax = "proto2";
+
+import "config/ipm_config.proto";
+import "config/optimizer_common_config.proto";
+package gpal.pnc.planning;
+
+
+message LocalPathOptimizerParam {
+  optional string key = 1;
+  optional double value = 2;
+  oneof property {
+    AttenuationParam attenuation = 4;
+  }
+}
+
+message LocalPathOptimizerWeight {
+  optional double prev_kappa = 1;
+  optional double prev_dkappa = 2;
+}
+
+message LocalPathOptimizerConstraint {
+  optional double max_kappa = 1 [default = 0.1];
+  optional double centr_acc = 2 [default = 1.0];  // centripetal acceleration, used for kappa bound
+  optional double decel = 3 [default = 0.5];  // centripetal acceleration, used for kappa bound
+  optional double min_v = 4 [default = 1.0];
+  optional double max_dkappa = 5 [default = 0.03];
+}
+
+message LocalPathOptimizerProfile {
+  optional string model = 1;
+  repeated LocalPathOptimizerParam default_params = 2;
+  repeated LocalPathOptimizerParam piecewise_params = 3;
+  repeated LocalPathOptimizerParam attenuation_params = 4;
+  optional LocalPathOptimizerConstraint constraint = 5;
+  optional LocalPathOptimizerWeight weights = 6;
+  optional IPMConfig ipm_config = 7;
+}
+
+message LocalPathBlockFsConfig  {
+  optional bool enable_fs_collision_check = 1 [default = false];
+  optional double collision_check_buffer = 2 [default = 0.0];
+  optional double corner_width = 3 [default = 0.0];
+  optional bool enable_curve_decide_process = 4 [default = false];
+  optional double curve_kappa_thresold = 5 [default = 0.0];
+  optional double curve_look_ahead_distance = 6 [default = 0.0];
+  optional double side_box_length = 7 [default = 0.0];
+  optional double side_box_width = 8 [default = 0.0];
+
+  optional bool enable_map_bound_collision_check = 11 [default = false];
+  optional double map_bound_range = 12 [default = 15.0];
+}
+
+message LocalPathOptimizerConfig {
+  optional bool enable_local_path = 1 [default = true];
+  optional double force_tail_length = 2 [default = 50.0];
+  optional double sample_inteval = 3 [default = 1.0];
+  optional bool force_cv_model = 4 [default = false];
+  optional float keep_moving_time = 5 [default = 5.0];
+  map<string, LocalPathOptimizerProfile> local_path_profiles = 6;
+  optional IPMConfig local_path_ipm_config = 7;
+  optional bool use_curr_state_kappa = 8 [default = false];
+  optional SpeedKappaBoundMap speed_kappa_bound_map = 9;
+  optional LocalPathBlockFsConfig local_path_block_fs_config = 10;
+  optional double cv_model_hold_time = 11 [default = 1.0];
+  optional double cv_model_decay_rate = 12 [default = 0.99];
+  optional double min_ref_path_length = 13 [default = 30.0];
+}

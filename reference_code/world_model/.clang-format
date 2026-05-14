@@ -1,0 +1,48 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+
+# 缩进相关
+AccessModifierOffset: -1 # 访问修饰符缩进对齐类声明(用于LRUCache等类的public/private对齐)
+IndentWidth: 2 # 2空格缩进(适配工程中大量模板类和嵌套命名空间)
+
+# 括号相关 
+BreakBeforeBraces: Attach # 大括号与语句同行(保持与ObstaclesContainer等类定义风格一致)
+
+# 对齐相关
+PointerAlignment: Left # 指针符号靠左(与工程中智能指针使用风格匹配)
+
+# 换行相关
+ColumnLimit: 120 # 放宽行宽限制(适配长模板参数和proto消息定义)
+BreakBeforeBinaryOperators: NonAssignment # 运算符前换行(保持复杂表达式可读性)
+AlwaysBreakTemplateDeclarations: Yes # 模板声明换行(适配大量模板类如LRUCache)
+
+# 函数/块相关
+AllowShortFunctionsOnASingleLine: Inline # 允许短函数单行(适配getter/setter方法)
+AllowShortIfStatementsOnASingleLine: false # 禁止单行if(保持条件语句清晰)
+AllowShortCaseLabelsOnASingleLine: false # 禁止单行case(适配状态机代码)
+
+# 空格相关
+SpaceBeforeAssignmentOperators: true # 赋值运算符前加空格(增强可读性)
+SpaceBeforeInheritanceColon: true # 继承冒号前加空格(保持类定义清晰)
+SpaceAfterTemplateKeyword: false # template关键字后不加空格
+
+# 包含文件相关
+SortIncludes: true # 自动排序头文件(统一工程包含顺序)
+IncludeBlocks: Regroup # 控制分组行为
+IncludeCategories:
+- Regex: '^<ext/.*' # 第三方扩展库
+  Priority: 1
+- Regex: '^<.*' # 系统头文件
+  Priority: 2
+- Regex: '^"' # 用户项目头文件
+  Priority: 3
+- Regex: '.*' # 其他情况
+  Priority: 4
+---
+
+Language: Proto
+BasedOnStyle: Google
+
+ColumnLimit: 120 # 放宽行宽限制(适配长模板参数和proto消息定义)
+AlignConsecutiveAssignments: true # 连续等号对齐(增强proto消息可读性) 

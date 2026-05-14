@@ -1,0 +1,28 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+// 场景分类
+enum MacroScenario {
+  URBAN_NOA              = 0;  // Urban Navigate on Autopilot
+  HIGHWAY_NOA            = 1;  // Highway Navigate on Autopilo
+  LCC                    = 2;  // Lane Centering Control
+  HPA                    = 4;  // Home-zone Parking Assist
+  UNKNOWN_MACRO_SCENARIO = -1;
+}
+
+// 驾驶风格
+enum DrivingStyle {
+  ECO     = 0;
+  NORMAL  = 1;
+  SPORT   = 2;
+  COMFORT = 3;
+  SAFETY  = 4;
+  UNKNOWN_DRIVING_STYLE = -1;
+}
+
+// 场景管理器
+message SpatioTemporalManagerConfig {
+  optional MacroScenario macro = 1;
+  optional DrivingStyle style  = 2;  // 驾驶风格
+}

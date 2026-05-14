@@ -1,0 +1,63 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message DynamicArcModelConfig {
+  optional string param = 1;
+  optional float  value = 2;
+}
+
+message DynamicArcModelConfigs {
+  repeated DynamicArcModelConfig dynamic_arc_model_configs = 1;
+}
+
+message ArcModelConfig {
+  optional int32  steering_angle_discrete_num = 1 [default = 1];
+  optional double move_step                   = 2 [default = 0.3];
+  optional int32  move_nums                   = 3 [default = 5];
+
+  optional float steering_penalty        = 6 [default = 1.0];
+  optional float changing_gear_penalty   = 7 [default = 10.0];
+  optional float steering_change_penalty = 8 [default = 0.0];
+  optional float moving_penalty          = 9 [default = 1.0];
+  optional float collision_penalty       = 10 [default = 0.0];
+  optional float collision_penalty_range = 11 [default = 6.0];
+
+  optional float shot_distance = 15 [default = 8.0];
+  optional float map_x_lower   = 16 [default = -1000];
+  optional float map_y_lower   = 17 [default = -1000];
+  optional float map_x_upper   = 18 [default = 1000];
+  optional float map_y_upper   = 19 [default = 1000];
+  // angular_upper = 360 deg / angular_resolution deg
+  // 注意：angular_resolution < 单步长扩展子节点最小的节点theta变化量
+  // 即 angular_resolution < move_step / min_turn_radius
+  optional int32 angular_upper       = 21 [default = 300];
+  optional float map_grid_resolution = 22 [default = 1.0];
+
+  optional float  steering_radian                 = 26 [default = 0.4];   // rad
+  optional float  search_stop_distance_x          = 27 [default = 0.5];   // m
+  optional float  search_stop_distance_y          = 28 [default = 0.5];   // m
+  optional float  search_stop_angle               = 29 [default = 5.0];   // deg
+  optional float  min_path_length_limit           = 30 [default = 1.0];   // m
+  optional float  search_time_limit               = 31 [default = 10.0];  // s
+  optional bool   debug_print_switch              = 32 [default = false];
+  optional uint32 straight_extend_num             = 33 [default = 1];
+  optional uint32 max_dynamic_straight_extend_num = 34 [default = 1];
+  optional float  last_leg_min_length_limit       = 35 [default = 1.0];  // m
+  optional float  min_path_length_limit_before_rs = 36 [default = 1.0];  // m
+
+  optional float width_collision_buff                          = 40 [default = 0.1];  // m
+  optional float length_collision_buff                         = 41 [default = 0.1];  // m
+  optional float dynamic_straight_extend_width_collision_buff  = 42 [default = 0.2];  // m
+  optional float dynamic_straight_extend_length_collision_buff = 43 [default = 0.5];  // m
+  optional bool  enable_s_shape                                = 44 [default = true];
+
+  optional bool  enable_start_ignore     = 50 [default = true];
+  optional int32 search_start_ignore_num = 51 [default = 2];
+
+  map<string, DynamicArcModelConfigs> dynamic_arc_model_config_map = 60;
+}
+
+message OpenspaceSearchConfig {
+  map<string, ArcModelConfig> arc_model_configs = 1;
+}

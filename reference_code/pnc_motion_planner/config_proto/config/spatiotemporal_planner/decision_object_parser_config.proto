@@ -1,0 +1,26 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+import "config/spatiotemporal_planner/spatiotemporal_manager_config.proto";
+import "config/base_object_parser_config.proto";
+import "config/base_lateral_path_bound_parser_config.proto";
+
+message DecisionObjectParserProfile {
+  optional double long_buffer = 1 [default = 4.0];
+  optional double lateral_buffer = 2 [default = 2.0];
+  optional double time_horizon = 3 [default = 3.0];
+  optional BaseObjectParserConfig.ObstacleBufferInfo obstacle_buffer_info = 4;
+  repeated BaseObjectParserConfig.ObstacleTypeBufferInfo obstacle_type_buffer_info = 5;
+  optional double dynamic_interaction_object_confidence_duration = 6 [default = 2.0];
+}
+
+message DecisionObjectParserConfig {
+  optional SpatioTemporalManagerConfig manager = 1;
+  optional DecisionObjectParserProfile profiles  = 2;
+}
+
+// 参数列表容器
+message DecisionObjectParserConfigList {
+  repeated DecisionObjectParserConfig entries = 1;
+}

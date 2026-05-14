@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message RedundantPlannerConfig {
+  // build virtual parallel ref based on memorized_route_ref
+  optional bool enable = 1 [default = false]; // enable redundant planner
+  optional bool only_use_last_successful_result = 2 [default = false];
+  optional bool enbale_overrunning_task_reset = 3 [default = false];
+  // replan to update planning start point.
+  optional bool enable_replan_planning_start_point       = 11 [default = true];
+  optional bool enable_replan_lateral_exceed_heading     = 12 [default = true];
+  optional bool enable_replan_kappa                      = 13 [default = false];
+  optional float replan_lateral_error_thresold           = 14 [default = 0.7];
+  optional float replan_longitudinal_error_thresold      = 15 [default = 3.0];
+  optional float replan_heading_thresold                 = 16 [default = 8.0];
+  optional float replan_lateral_error_thresold_lane      = 17 [default = 0.7];
+  optional float replan_longitudinal_error_thresold_lane = 18 [default = 3.0];
+  optional float replan_heading_thresold_lane            = 19 [default = 8.0];
+  optional bool enable_replan_use_local_in_navi          = 21 [default = false];
+  optional float remain_dis_buffer                       = 22 [default = 0.0];
+
+  optional bool enable_unconstrained_lateral_mode = 30 [default = false];
+  optional float unconstrained_default_boundary_half_width = 31 [default = 1.5];
+}

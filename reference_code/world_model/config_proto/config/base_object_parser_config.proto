@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+// 基础物体类型，供 decision_object_parser 与 lateral_path_bound_parser 等复用
+message BaseObjectParserConfig {
+  enum ObjectType {
+    UNKNOWN = 0;        ///< 未知类型
+    PEDESTRIAN = 1;     ///< 行人类型
+    VRU = 2;            ///< 非机动车，包括自行车等
+    VEHICLE = 3;        ///< 机动车，包括汽车、摩托车等
+    HEAVY_VEHICLE = 4;  ///< 重型车辆
+  }
+  message ObstacleBufferInfo {
+    optional double longitudinal_safe_distance_lower = 1 [default = 1.0];
+    optional double longitudinal_safe_distance_upper = 2 [default = 6.0];
+    optional double barrier_lateral_safe_distance = 3 [default = 0.2];
+    optional double soft_lateral_safe_distance = 4 [default = 1.0];
+    optional double coff_a = 5 [default = 0.0005];
+    optional double coff_b = 6 [default = 0.018];
+    optional double coff_c_min = 7 [default = 0.5];
+    optional double longitudinal_stop_safe_distance = 8 [default = 3.0];
+    optional double hypot_buffer = 9 [default = 0.5];
+  }
+
+  message ObstacleTypeBufferInfo {
+    optional ObjectType obs_type = 1;
+    optional ObstacleBufferInfo obs_info = 2;
+  }
+}

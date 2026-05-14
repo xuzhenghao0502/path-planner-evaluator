@@ -1,0 +1,14 @@
+/build
+/external
+/install
+/speed_planner/doc
+/speed_planner/Doxyfile
+
+.cache
+.idea
+.sublime-workspace
+.vscode
+.DS_Store
+CMakeUserPresets.json
+CMakeLists.txt.user*
+build-*

@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message StGraphProcessorConfig {
+    
+    optional bool enable_lateral_risk_function = 1 [default = false];
+    optional double lateral_risk_function_a = 2 [default = 0.002];
+    optional double lateral_risk_function_b = 3 [default = 0.0];
+    optional double lateral_risk_function_c = 4 [default = 0.25];
+
+}

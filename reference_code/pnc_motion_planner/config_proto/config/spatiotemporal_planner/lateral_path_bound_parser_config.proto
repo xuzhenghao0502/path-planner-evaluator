@@ -1,0 +1,57 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+import "config/spatiotemporal_planner/spatiotemporal_manager_config.proto";
+import "config/base_lateral_path_bound_parser_config.proto";
+
+message LateralPathBoundParserProfile {
+  optional double max_range = 1 [default = 15.0];
+  optional double resolution = 2 [default = 1.0];
+  optional double roi_threshold = 3 [default = 0.5];
+  optional int32 horizon = 4 [default = 50];
+
+  optional double max_road_width_left = 21 [default = 20.0];
+  optional double max_road_width_right = 22 [default = 20.0];
+  optional double max_lane_width_left = 23 [default = 1.875];
+  optional double max_lane_width_right = 24 [default = 1.875];
+  optional double barrier_bound_extend_buffer = 25 [default = 0.0];
+  optional double search_radius = 26 [default = 0.5];
+  optional double search_step = 27 [default = 0.2];
+
+  optional BaseLateralPathBoundParserProfile.TypeLateralDistPairs type_lateral_dist_pairs = 31;
+  optional bool enable_lateral_buffer_use_obs_type = 32 [default = false];
+
+  optional float bound_ignore_rear_buffer = 33 [default = 3.0];
+  optional float bound_ignore_front_buffer = 34 [default = 10.0];
+
+  // for static obs
+  optional double default_max_barrier_lateral_buffer_for_obs = 41 [default = 0.0];
+  optional double default_min_barrier_lateral_buffer_for_obs = 42 [default = 0.0];
+  optional double default_max_soft_lateral_buffer_for_obs = 43 [default = 0.0];
+  optional double default_min_soft_lateral_buffer_for_obs = 44 [default = 0.0];
+  optional double barrier_start_long_buffer_for_obs = 45 [default = 1.0];
+  optional double barrier_end_long_buffer_for_obs = 46 [default = 1.0];
+  optional double soft_start_long_buffer_for_obs = 47 [default = 5.0];
+  optional double soft_end_long_buffer_for_obs = 48 [default = 5.0];
+  optional double max_speed_limit = 49 [default = 80.0];
+
+  // filter
+  map<string, LateralPathBoundFilterConfig> path_bound_filter_configs = 51;
+
+
+  optional BaseLateralPathBoundParserProfile.SpeedDecisionBoundBufferMap speed_decision_bound_buffer_map = 61;
+
+
+  optional BaseLateralPathBoundParserProfile.SpeedLongitBoundBufferMap speed_longit_bound_buffer_map = 71;
+}
+
+message LateralPathBoundParserConfig {
+  optional SpatioTemporalManagerConfig manager = 1;
+  optional LateralPathBoundParserProfile profiles  = 2;
+}
+
+// 参数列表容器
+message LateralPathBoundParserConfigList {
+  repeated LateralPathBoundParserConfig entries = 1;
+}

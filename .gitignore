@@ -1,0 +1,19 @@
+# Build artifacts
+build/
+install/
+log/
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

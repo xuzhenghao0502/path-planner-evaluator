@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message PathBoundParserConfig {
+  optional double max_range = 1 [default = 15.0];
+  optional double resolution = 2 [default = 1.0];
+  optional double roi_thresold = 3 [default = 8.0];
+}
+
+message PathBoundFilterConfig {
+  optional bool enb = 1 [default = true];
+  optional double filter_in = 2 [default = 0.9];
+  optional double filter_out = 3 [default = 0.1];
+  optional double confidence_range = 4 [default = 20];
+  optional double attenuation_start_length = 11 [default = 0.0];
+  optional double attenuation_coefs = 12 [default = 0.0];
+}

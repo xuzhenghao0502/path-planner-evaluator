@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package gpal.pnc.planning;
+
+message MemorizedRouteConfig {
+  enum RouteName {
+    INVALID_ROUTE = 0;
+    JIANGHUAI_20KM = 1;
+    JIANGHUAI_DUANTOU = 2;
+    SANGHAI_7KM = 3;
+    SANGHAI_21KM = 4;
+    JIANGHUAI_20KM_SHIGONG = 5;
+  }
+  message RouteConfig {
+    optional RouteName route_name = 1;
+
+    message SpecialRange {
+      enum Type {
+        NAVIGATION_LANE_CHANGE = 0;
+      }
+      optional Type type = 1;
+      optional double start_s = 2 [default = 0.0];
+      optional double end_s = 3 [default = 0.0];
+      optional bool is_left_direction = 4 [default = true];
+    }
+    repeated SpecialRange special_ranges = 2;
+  }
+
+  optional bool is_routes_config_enable = 1 [default = false];
+  repeated RouteConfig routes_config = 2;
+  optional RouteName default_route_name = 3;
+}
