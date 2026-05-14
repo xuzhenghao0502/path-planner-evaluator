@@ -65,13 +65,21 @@ ros2 launch openspace_ros2_bridge planner_system.launch.py
 ```
 
 这将同时启动:
+- **Static TF Publisher** — 发布 `map → odom` 静态坐标系（RViz2 Fixed Frame 依赖）
 - **Map Editor Node** — 地图编辑节点
 - **Planner Bridge Node** — 路径规划节点
-- **RViz2** — 可视化界面
+- **RViz2** — 可视化界面（预配置 TopDownOrtho 俯视图）
 
 ---
 
 ## 使用指南
+
+操作需要**两个终端**（都先 `docker exec -it ros2 bash` 并 source ROS2 环境）：
+
+- **终端 A**：运行 `ros2 launch ...`，观察日志输出
+- **终端 B**：执行服务调用和话题发布命令
+
+> 如果 RViz2 工具栏的 **Publish Point** 工具前有红叉无法使用，改用终端 B 手动发 `/clicked_point` 话题即可，两种方式效果相同——参见本章末尾的命令行绘制方式。
 
 ### 第一步：绘制场景
 
@@ -79,16 +87,25 @@ RViz2 启动后，你会看到一个 40m×40m 的俯视地图。
 
 **1.1 选择绘制模式**
 
-| 操作 | 命令 |
+| 操作 | 命令（在终端 B 执行） |
 |------|------|
 | 障碍物模式（红色） | `ros2 service call /map_editor_node/set_mode_obstacle std_srvs/srv/Trigger {}` |
 | 自由空间模式（绿色） | `ros2 service call /map_editor_node/set_mode_free std_srvs/srv/Trigger {}` |
 
 **1.2 绘制多边形**
 
-在 RViz2 工具栏中选择 **"Publish Point"** 工具，在地图上依次点击多边形顶点。每次点击会在 `/polygon_viz` 话题上显示一个球体标记。
+**方式一（推荐）**：在 RViz2 工具栏中选择 **"Publish Point"** 工具，在地图上依次点击多边形顶点。每次点击，终端 A 会打印 `Added vertex` 日志。
 
-当前绘制的多边形以虚线预览显示（半透明）。至少需要点击 **3 个顶点** 才能闭合。
+**方式二（命令行，无 GUI 依赖）**：在终端 B 逐个发送顶点坐标：
+
+```bash
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 4, y: -2, z: 0}}'
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 6, y: -2, z: 0}}'
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 6, y: 2, z: 0}}'
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 4, y: 2, z: 0}}'
+```
+
+当前绘制的多边形在 RViz2 中显示为虚线预览（半透明），顶点有小球标记。至少需要 **3 个顶点** 才能闭合。
 
 **1.3 闭合多边形**
 
@@ -291,29 +308,35 @@ ros2 run openspace_ros2_bridge planner_bridge_node \
 
 ---
 
-## 完整工作流示例
+## 完整工作流示例（命令行方式）
 
-以下是在 Docker 容器内完成一次完整规划的脚本：
+以下在 **终端 B** 中依次执行，配合 **终端 A** 中运行的 Launch 系统：
 
 ```bash
-# 1. 启动系统
-ros2 launch openspace_ros2_bridge planner_system.launch.py &
-
-# 2. 绘制障碍物多边形（在 RViz2 中用 Publish Point 点击 4 个顶点）
+# 1. 障碍物模式
 ros2 service call /map_editor_node/set_mode_obstacle std_srvs/srv/Trigger {}
-# ... 在 RViz2 中依次点击 (4,-2), (6,-2), (6,2), (4,2) ...
+
+# 2. 逐个发送 4 个顶点（画一个 2m×4m 的矩形障碍物）
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 4, y: -2, z: 0}}'
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 6, y: -2, z: 0}}'
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 6, y: 2, z: 0}}'
+ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x: 4, y: 2, z: 0}}'
+
+# 3. 闭合多边形
 ros2 service call /map_editor_node/finish_polygon std_srvs/srv/Trigger {}
 
-# 3. 设置起终点
+# 4. 设置起点（朝向正东）
 ros2 topic pub --once /start_pose geometry_msgs/msg/PoseStamped \
   '{pose: {position: {x: 0, y: 0}, orientation: {w: 1}}}'
+
+# 5. 设置终点
 ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped \
   '{pose: {position: {x: 10, y: 0}, orientation: {w: 1}}}'
 
-# 4. 执行规划
+# 6. 执行规划
 ros2 service call /planner_bridge_node/plan_path std_srvs/srv/Trigger {}
 
-# 5. （可选）保存场景
+# 7. （可选）保存场景
 ros2 service call /map_editor_node/save_scene std_srvs/srv/Trigger {}
 ```
 
