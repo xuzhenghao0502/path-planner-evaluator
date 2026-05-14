@@ -20,12 +20,11 @@ def generate_launch_description():
                 default_value=default_rviz,
                 description="RViz2 config file",
             ),
-            # Static TF: map -> odom (required by RViz2 for fixed frame "map")
+            # TF publisher: map -> odom (10 Hz, required by RViz2 for fixed frame "map")
             Node(
-                package="tf2_ros",
-                executable="static_transform_publisher",
-                name="map_to_odom_tf",
-                arguments=["0", "0", "0", "0", "0", "0", "1", "map", "odom"],
+                package="openspace_ros2_bridge",
+                executable="map_tf_publisher.py",
+                name="map_tf_publisher",
                 output="screen",
             ),
             # Map Editor Node

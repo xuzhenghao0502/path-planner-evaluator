@@ -1,0 +1,8 @@
+# Request: start and goal poses for planning
+geometry_msgs/Pose2D start
+geometry_msgs/Pose2D goal
+---
+# Response: planning result
+bool success
+nav_msgs/Path path
+string message
