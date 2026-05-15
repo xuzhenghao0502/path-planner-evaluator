@@ -8,6 +8,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
+#include <cmath>
 #include <memory>
 #include <any>
 #include <mutex>
@@ -224,10 +225,17 @@ class PlannerBridgeNode : public rclcpp::Node {
 
     // Validate start/goal poses are collision-free
     auto veh = vehicle_config_.vehicle_param();
-    math::Box2d start_box(math::Vec2d(start_->pose.position.x, start_->pose.position.y),
-                          quatToYaw(start_->pose.orientation), veh.length(), veh.width());
-    math::Box2d goal_box(math::Vec2d(goal_->pose.position.x, goal_->pose.position.y),
-                         quatToYaw(goal_->pose.orientation), veh.length(), veh.width());
+    double shift = veh.length() / 2.0 - veh.rear_edge_to_ego();
+    double start_yaw = quatToYaw(start_->pose.orientation);
+    double goal_yaw = quatToYaw(goal_->pose.orientation);
+    math::Box2d start_box(
+        math::Vec2d(start_->pose.position.x + shift * std::cos(start_yaw),
+                    start_->pose.position.y + shift * std::sin(start_yaw)),
+        start_yaw, veh.length(), veh.width());
+    math::Box2d goal_box(
+        math::Vec2d(goal_->pose.position.x + shift * std::cos(goal_yaw),
+                    goal_->pose.position.y + shift * std::sin(goal_yaw)),
+        goal_yaw, veh.length(), veh.width());
 
     auto checkPose = [&](const math::Box2d& box, const char* name) -> std::string {
       if (freespace->isOutOfMap(box.center().x(), box.center().y())) {
@@ -350,6 +358,9 @@ class PlannerBridgeNode : public rclcpp::Node {
     double length = vehicle_config_.vehicle_param().length();
     double width = vehicle_config_.vehicle_param().width();
 
+    double rear_edge_to_ego = vehicle_config_.vehicle_param().rear_edge_to_ego();
+    double shift = length / 2.0 - rear_edge_to_ego;
+
     for (size_t i = 0; i < path.size(); ++i) {
       visualization_msgs::msg::Marker marker;
       marker.header.stamp = this->now();
@@ -358,10 +369,10 @@ class PlannerBridgeNode : public rclcpp::Node {
       marker.id = static_cast<int>(i);
       marker.type = visualization_msgs::msg::Marker::CUBE;
       marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.pose.position.x = path[i].x();
-      marker.pose.position.y = path[i].y();
-      marker.pose.position.z = 0.15;
       double theta = path[i].theta();
+      marker.pose.position.x = path[i].x() + shift * std::cos(theta);
+      marker.pose.position.y = path[i].y() + shift * std::sin(theta);
+      marker.pose.position.z = 0.15;
       marker.pose.orientation.z = std::sin(theta / 2.0);
       marker.pose.orientation.w = std::cos(theta / 2.0);
       marker.scale.x = length;
