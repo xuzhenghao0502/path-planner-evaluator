@@ -4,9 +4,9 @@ namespace gpal::pnc::planning {
 
 struct VehicleParam {
   double wheel_base_ = 2.8;
-  double length_ = 4.8;
-  double width_ = 1.9;
-  double width_without_rearview_mirror_ = 1.9;
+  double length_ = 12.0;
+  double width_ = 2.6;
+  double width_without_rearview_mirror_ = 2.6;
   double rear_overhang_ = 0.9;
   double rear_edge_to_ego_ = 3.5;
 

@@ -92,12 +92,12 @@ class PlannerBridgeNode : public rclcpp::Node {
   // Parameter declarations
   // ============================================================
   void declare_parameters() {
-    this->declare_parameter("vehicle.length", 4.8);
-    this->declare_parameter("vehicle.width", 1.9);
+    this->declare_parameter("vehicle.length", 12.0);
+    this->declare_parameter("vehicle.width", 2.6);
     this->declare_parameter("vehicle.wheel_base", 2.8);
     this->declare_parameter("vehicle.rear_overhang", 0.9);
     this->declare_parameter("vehicle.rear_edge_to_ego", 3.5);
-    this->declare_parameter("vehicle.width_without_rearview_mirror", 1.9);
+    this->declare_parameter("vehicle.width_without_rearview_mirror", 2.6);
 
     this->declare_parameter("search.step_size", 0.3);
     this->declare_parameter("search.steering_angle_discrete_num", 1);
