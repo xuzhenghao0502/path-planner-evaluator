@@ -4,11 +4,12 @@ Map Editor Node - RViz2 interactive polygon drawing tool for openspace planner.
 
 Usage in RViz2:
   1. Use "Publish Point" tool to click polygon vertices
-  2. Call ~/finish_polygon service to close the current polygon
-  3. Call ~/undo_last_point to remove the last vertex
-  4. Call ~/set_mode with "obstacle" or "free_space" to switch drawing mode
-  5. Call ~/clear_all to remove all polygons
-  6. Call ~/save_scene / ~/load_scene to persist scenes as JSON
+  2. After >=3 vertices, click near the first vertex (within 0.5m) to auto-close
+  3. Or call ~/finish_polygon service to close the current polygon manually
+  4. Call ~/undo_last_point to remove the last vertex
+  5. Call ~/set_mode with "obstacle" or "free_space" to switch drawing mode
+  6. Call ~/clear_all to remove all polygons
+  7. Call ~/save_scene / ~/load_scene to persist scenes as JSON
 """
 
 import rclpy
@@ -59,14 +60,27 @@ class MapEditorNode(Node):
 
         self.get_logger().info(
             'Map Editor Node ready. Mode: obstacle. '
-            'Use RViz2 "Publish Point" to click vertices, '
-            'then call ~/finish_polygon to close.'
+            'Use "Publish Point" to click vertices. '
+            'After >=3 vertices, click near first vertex to auto-close.'
         )
 
     # ---- Topic callbacks ----
 
     def on_click(self, msg: PointStamped):
         x, y = msg.point.x, msg.point.y
+
+        # Auto-close: if >=3 vertices and click is near first vertex, finish polygon
+        CLOSE_THRESHOLD = 0.5  # meters
+        if len(self.current_polygon) >= 3:
+            x0, y0 = self.current_polygon[0]
+            dist = ((x - x0) ** 2 + (y - y0) ** 2) ** 0.5
+            if dist < CLOSE_THRESHOLD:
+                self.get_logger().info(
+                    f"Click near first vertex (dist={dist:.2f}m), auto-closing polygon"
+                )
+                self._finish_current_polygon()
+                return
+
         self.current_polygon.append((x, y))
         self.get_logger().info(
             f"Added vertex ({x:.2f}, {y:.2f}) — "
@@ -76,6 +90,21 @@ class MapEditorNode(Node):
 
     # ---- Service callbacks ----
 
+    def _finish_current_polygon(self):
+        """Close the current polygon and add it to the completed list."""
+        n = len(self.current_polygon)
+        poly = {
+            "vertices": list(self.current_polygon),
+            "is_occupied": (self.mode == "obstacle"),
+        }
+        self.polygons.append(poly)
+        self.current_polygon = []
+        self._publish_all()
+        self.get_logger().info(
+            f"Polygon closed ({n} vertices, mode={self.mode}). Total polygons: {len(self.polygons)}"
+        )
+        return n
+
     def on_finish_polygon(self, request, response):
         if len(self.current_polygon) < 3:
             response.success = False
@@ -83,18 +112,9 @@ class MapEditorNode(Node):
             self.get_logger().warn(response.message)
             return response
 
-        poly = {
-            "vertices": list(self.current_polygon),
-            "is_occupied": (self.mode == "obstacle"),
-        }
-        self.polygons.append(poly)
-        n = len(self.current_polygon)
-        self.current_polygon = []
-        self._publish_all()
-
+        n = self._finish_current_polygon()
         response.success = True
         response.message = f"Polygon closed ({n} vertices, mode={self.mode}). Total polygons: {len(self.polygons)}"
-        self.get_logger().info(response.message)
         return response
 
     def on_undo_last_point(self, request, response):
@@ -120,8 +140,7 @@ class MapEditorNode(Node):
 
     def on_set_mode_obstacle(self, request, response):
         self.mode = "obstacle"
-        msg = String(data="obstacle")
-        self.mode_pub.publish(msg)
+        self._publish_mode()
         response.success = True
         response.message = "Mode set to obstacle (red)"
         self.get_logger().info(response.message)
@@ -130,13 +149,16 @@ class MapEditorNode(Node):
 
     def on_set_mode_free(self, request, response):
         self.mode = "free_space"
-        msg = String(data="free_space")
-        self.mode_pub.publish(msg)
+        self._publish_mode()
         response.success = True
         response.message = "Mode set to free_space (green)"
         self.get_logger().info(response.message)
         self._publish_all()
         return response
+
+    def _publish_mode(self):
+        msg = String(data=self.mode)
+        self.mode_pub.publish(msg)
 
     def on_save_scene(self, request, response):
         scene_dir = self.get_parameter("scene_dir").value

@@ -16,6 +16,10 @@ Visualization Manager:
       Topic: /polygon_viz
       Enabled: true
     - Class: rviz_default_plugins/MarkerArray
+      Name: Start / Goal Viz
+      Topic: /start_goal_viz
+      Enabled: true
+    - Class: rviz_default_plugins/MarkerArray
       Name: Vehicle Boxes
       Topic: /vehicle_boxes
       Enabled: true

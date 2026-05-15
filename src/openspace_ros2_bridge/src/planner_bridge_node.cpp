@@ -3,6 +3,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -31,16 +32,21 @@ class PlannerBridgeNode : public rclcpp::Node {
     path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/trajectory_path", 10);
     box_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/vehicle_boxes", 10);
     result_pub_ = this->create_publisher<std_msgs::msg::String>("/planning_result", 10);
+    start_goal_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/start_goal_viz", 10);
 
-    // Subscriber for start pose (via RViz 2D Pose Estimate tool)
-    start_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+    // Subscriber for start pose (via RViz 2D Pose Estimate → /initialpose)
+    start_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "/initialpose", 10,
-        [this](geometry_msgs::msg::PoseStamped::ConstSharedPtr msg) {
-          start_ = msg;
+        [this](geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg) {
+          auto pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
+          pose->header = msg->header;
+          pose->pose = msg->pose.pose;
+          start_ = pose;
+          double yaw_deg = std::atan2(2.0*(pose->pose.orientation.w*pose->pose.orientation.z + pose->pose.orientation.x*pose->pose.orientation.y),
+                                      1.0-2.0*(pose->pose.orientation.y*pose->pose.orientation.y + pose->pose.orientation.z*pose->pose.orientation.z))*180.0/M_PI;
           RCLCPP_INFO(this->get_logger(), "Start pose: (%.2f, %.2f, %.1f deg)",
-                      msg->pose.position.x, msg->pose.position.y,
-                      std::atan2(2.0*(msg->pose.orientation.w*msg->pose.orientation.z + msg->pose.orientation.x*msg->pose.orientation.y),
-                                 1.0-2.0*(msg->pose.orientation.y*msg->pose.orientation.y + msg->pose.orientation.z*msg->pose.orientation.z))*180.0/M_PI);
+                      pose->pose.position.x, pose->pose.position.y, yaw_deg);
+          publishStartGoalViz();
         });
 
     // Subscriber for goal pose (via RViz 2D Goal Pose tool)
@@ -50,6 +56,7 @@ class PlannerBridgeNode : public rclcpp::Node {
           goal_ = msg;
           RCLCPP_INFO(this->get_logger(), "Goal pose: (%.2f, %.2f)",
                       msg->pose.position.x, msg->pose.position.y);
+          publishStartGoalViz();
         });
 
     // Subscriber for obstacle polygons (from Map Editor)
@@ -73,8 +80,8 @@ class PlannerBridgeNode : public rclcpp::Node {
     loadConfigs();
 
     RCLCPP_INFO(this->get_logger(), "Planner Bridge Node ready. "
-                "Set start via RViz '2D Pose Estimate', goal via '2D Goal Pose', "
-                "or publish to /initialpose /goal_pose topics. "
+                "Start: RViz '2D Pose Estimate' (/initialpose). "
+                "Goal: RViz '2D Goal Pose' (/goal_pose). "
                 "Call ~/plan_path to trigger planning.");
   }
 
@@ -171,7 +178,7 @@ class PlannerBridgeNode : public rclcpp::Node {
       std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
     if (!start_ || !goal_) {
       response->success = false;
-      response->message = "Start or goal pose not set. Publish to /start_pose and /goal_pose.";
+      response->message = "Start or goal pose not set. Use RViz 2D Pose Estimate and 2D Goal Pose tools.";
       RCLCPP_WARN(this->get_logger(), "%s", response->message.c_str());
       return;
     }
@@ -355,13 +362,50 @@ class PlannerBridgeNode : public rclcpp::Node {
   }
 
   // ============================================================
+  // Publish start/goal visualization markers
+  // ============================================================
+  void publishStartGoalViz() {
+    visualization_msgs::msg::MarkerArray arr;
+    int id = 0;
+
+    auto makeArrow = [&](const geometry_msgs::msg::Pose& pose, float r, float g, float b) {
+      visualization_msgs::msg::Marker m;
+      m.header.stamp = this->now();
+      m.header.frame_id = "map";
+      m.ns = "start_goal";
+      m.id = id++;
+      m.type = visualization_msgs::msg::Marker::ARROW;
+      m.action = visualization_msgs::msg::Marker::ADD;
+      m.pose = pose;
+      m.scale.x = 0.8;   // shaft length
+      m.scale.y = 0.15;  // shaft diameter
+      m.scale.z = 0.3;   // head diameter
+      m.color.r = r;
+      m.color.g = g;
+      m.color.b = b;
+      m.color.a = 1.0;
+      return m;
+    };
+
+    if (start_) {
+      arr.markers.push_back(makeArrow(start_->pose, 0.2, 0.6, 1.0));  // blue
+    }
+    if (goal_) {
+      arr.markers.push_back(makeArrow(goal_->pose, 1.0, 0.2, 0.2));  // red
+    }
+
+    start_goal_viz_pub_->publish(arr);
+  }
+
+  // ============================================================
   // Members
   // ============================================================
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr box_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr result_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr start_goal_viz_pub_;
 
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr start_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr start_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr polygon_sub_;
 

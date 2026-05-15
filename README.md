@@ -8,8 +8,9 @@
 ┌──────────────────────────────────────────────────────────┐
 │                        RViz2                             │
 │  工具栏: Publish Point → /clicked_point                   │
+│        2D Goal Pose → /goal_pose                         │
 │  显示: /obstacle_polygons, /polygon_viz, /vehicle_boxes  │
-│        /trajectory_path                                   │
+│        /trajectory_path, /start_goal_viz                 │
 └──────────────────────────────────────────────────────────┘
           │                              ▲
           ▼                              │
@@ -109,6 +110,9 @@ ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x:
 
 **1.3 闭合多边形**
 
+**方式一（推荐）**：绘制 **3 个以上顶点** 后，在第一个顶点附近（0.5m 内）点击就会自动闭合多边形。
+
+**方式二（命令行）**：
 ```bash
 ros2 service call /map_editor_node/finish_polygon std_srvs/srv/Trigger {}
 ```
@@ -119,27 +123,15 @@ ros2 service call /map_editor_node/finish_polygon std_srvs/srv/Trigger {}
 
 ### 第二步：设置起终点
 
-在 RViz2 工具栏中：
+> **注意**：RViz2 的 "2D Pose Estimate" 工具存在已知类型冲突问题，会导致崩溃。起点请使用命令行方式设置。
 
-| 操作 | 工具 | 快捷键 |
-|------|------|--------|
-| 设置**起点**（位置+朝向） | **2D Pose Estimate** | 点击位置后**拖动**鼠标设定朝向再释放 |
-| 设置**终点**（位置+朝向） | **2D Goal Pose** | 同上 |
+**终点**：在 RViz2 工具栏中选择 **"2D Goal Pose"** 工具，点击位置后拖动鼠标设定朝向。
 
-或者用命令行：
+**起点**（命令行）：
 
 ```bash
-# 设置起点
-ros2 topic pub --once /initialpose geometry_msgs/msg/PoseStamped \
+ros2 topic pub --once /start_pose geometry_msgs/msg/PoseStamped \
   '{pose: {position: {x: 0, y: 0}, orientation: {w: 1}}}'
-
-# 设置终点
-ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped \
-  '{pose: {position: {x: 0, y: 0, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}}'
-
-# 设置终点
-ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped \
-  '{pose: {position: {x: 10, y: 0, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}}'
 ```
 
 > **朝向说明**: `orientation` 使用四元数，`{x:0, y:0, z:0, w:1}` 表示朝向正东（0°）。朝向正北为 `{x:0, y:0, z:0.707, w:0.707}`（90°）。
@@ -260,8 +252,8 @@ ros2 run openspace_ros2_bridge planner_bridge_node \
 
 | 话题 | 类型 | 说明 |
 |------|------|------|
-| `/initialpose` | `geometry_msgs/PoseStamped` | 规划起点（RViz 2D Pose Estimate 工具） |
-| `/goal_pose` | `geometry_msgs/PoseStamped` | 规划终点 |
+| `/start_pose` | `geometry_msgs/PoseStamped` | 规划起点（命令行发布） |
+| `/goal_pose` | `geometry_msgs/PoseStamped` | 规划终点（RViz 2D Goal Pose 工具） |
 | `/obstacle_polygons` | `visualization_msgs/MarkerArray` | 障碍物多边形（由 Map Editor 发布） |
 
 ### 输入话题（Map Editor 订阅）
@@ -277,6 +269,7 @@ ros2 run openspace_ros2_bridge planner_bridge_node \
 | `/trajectory_path` | `nav_msgs/Path` | Planner | 规划路径 |
 | `/vehicle_boxes` | `visualization_msgs/MarkerArray` | Planner | 车辆碰撞箱 |
 | `/planning_result` | `std_msgs/String` | Planner | 规划结果摘要 |
+| `/start_goal_viz` | `visualization_msgs/MarkerArray` | Planner | 起点（蓝色）/终点（红色）箭头 |
 | `/obstacle_polygons` | `visualization_msgs/MarkerArray` | Map Editor | 障碍物多边形 |
 | `/polygon_viz` | `visualization_msgs/MarkerArray` | Map Editor | 绘图预览（顶点+边框） |
 | `/map_editor/mode` | `std_msgs/String` | Map Editor | 当前绘制模式 |
@@ -314,6 +307,7 @@ ros2 run openspace_ros2_bridge planner_bridge_node \
 | Grid | — | 参考网格 |
 | Obstacle Polygons | `/obstacle_polygons` | 红色=障碍物，绿色=自由空间 |
 | Polygon Viz | `/polygon_viz` | 顶点球标记 + 多边形边框 |
+| Start / Goal Viz | `/start_goal_viz` | 蓝色箭头=起点，红色箭头=终点 |
 | Vehicle Boxes | `/vehicle_boxes` | 绿色半透明车辆长方形 |
 | Trajectory Path | `/trajectory_path` | 绿色路径曲线 |
 
@@ -339,7 +333,7 @@ ros2 topic pub --once /clicked_point geometry_msgs/msg/PointStamped '{point: {x:
 ros2 service call /map_editor_node/finish_polygon std_srvs/srv/Trigger {}
 
 # 4. 设置起点（朝向正东）
-ros2 topic pub --once /initialpose geometry_msgs/msg/PoseStamped \
+ros2 topic pub --once /start_pose geometry_msgs/msg/PoseStamped \
   '{pose: {position: {x: 0, y: 0}, orientation: {w: 1}}}'
 
 # 5. 设置终点
