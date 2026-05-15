@@ -593,9 +593,8 @@ std::vector<std::vector<PathPt>> RSPath::GetRSPath(const Eigen::Vector3d& start_
         case N:  // 无运动
           break;
       }
-      // 创建路径点
-      PathPt pt(temp_pose.x(), temp_pose.y(), 0, 0, temp_pose.z());
-      pt.set_kappa(current_kappa);
+      // 创建路径点 (PathPt ctor: x, y, theta, kappa, s)
+      PathPt pt(temp_pose.x(), temp_pose.y(), temp_pose.z(), current_kappa, 0.0);
       pt.set_direction(current_direction);
       current_segment.push_back(pt);
     }

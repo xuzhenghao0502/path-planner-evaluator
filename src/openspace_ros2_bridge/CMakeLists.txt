@@ -91,7 +91,7 @@ target_include_directories(planner_bridge_node PRIVATE
 # ============================================================
 
 install(TARGETS planner_bridge_node DESTINATION lib/${PROJECT_NAME})
-install(PROGRAMS scripts/map_editor_node.py scripts/map_tf_publisher.py DESTINATION lib/${PROJECT_NAME})
+install(PROGRAMS scripts/map_editor_node.py scripts/map_tf_publisher.py scripts/test_planner.py DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY rviz DESTINATION share/${PROJECT_NAME})

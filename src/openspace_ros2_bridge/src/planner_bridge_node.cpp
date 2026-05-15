@@ -11,6 +11,8 @@
 #include <memory>
 #include <any>
 #include <mutex>
+#include <thread>
+#include <chrono>
 #include <string>
 #include <sstream>
 
@@ -251,21 +253,32 @@ class PlannerBridgeNode : public rclcpp::Node {
       return;
     }
 
-    // Run search
+    // Run search (A* runs in background thread, WAITING means still in progress)
     PathProviderBaseHAStar<ArcModel, ArcPathNodeKeyHash> searcher;
     std::any data = search_data;
     auto status = searcher.run(data);
+    while (status == BaseOpenspacePathPlanner::WAITING) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      status = searcher.run(data);
+    }
 
     // Build response
     if (status == BaseOpenspacePathPlanner::FINISH) {
+      const auto& path = search_data->search_path_;
       response->success = true;
-      response->message = "Path found: " + std::to_string(search_data->search_path_.size()) + " points";
+      response->message = "Path found: " + std::to_string(path.size()) + " points";
 
-      publishPath(search_data->search_path_);
-      publishVehicleBoxes(search_data->search_path_);
+      // Print trajectory points
+      RCLCPP_INFO(this->get_logger(), "=== Trajectory (%zu points) ===", path.size());
+      for (size_t i = 0; i < path.size(); ++i) {
+        RCLCPP_INFO(this->get_logger(), "  [%zu] (%.2f, %.2f, %.1f deg)",
+                    i, path[i].x(), path[i].y(), path[i].theta() * 180.0 / M_PI);
+      }
 
-      RCLCPP_INFO(this->get_logger(), "Planning succeeded: %zu points",
-                  search_data->search_path_.size());
+      publishPath(path);
+      publishVehicleBoxes(path);
+
+      RCLCPP_INFO(this->get_logger(), "Planning succeeded: %zu points", path.size());
     } else {
       const char* status_str = (status == BaseOpenspacePathPlanner::FAILED) ? "SEARCH_FAILED" : "UNKNOWN";
       response->success = false;

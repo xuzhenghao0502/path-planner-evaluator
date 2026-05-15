@@ -295,11 +295,14 @@ class ArcModel {
     } else {
       path_nodes_.insert(path_nodes_.end(), rs_node_res.begin() + 1, rs_node_res.end());
     }
-    for (auto pt : rs_node_res) {
-      OPENSPACE_LOG(D, "[ArcModel][analyticExpansions]rs_path ", pt.x, " ", pt.y, " ", pt.theta, " ", pt.kappa, " ",
-                    pt.direction);
-    }
-    OPENSPACE_LOG(I, "[ArcModel][analyticExpansions]rs cal success !");
+    OPENSPACE_LOG(I, "[ArcModel][analyticExpansions] rs_path from (", path_node.x, ", ", path_node.y, ", ",
+                  path_node.theta * RAD2ANG, " deg) to (", goal_node.x, ", ", goal_node.y, ", ",
+                  goal_node.theta * RAD2ANG, " deg), ", rs_path_poses.size(), " segments, ", rs_node_res.size(),
+                  " pts, first_pt_dir_match=", !rs_first_pt_is_shift);
+    OPENSPACE_LOG(I, "[ArcModel][analyticExpansions] rs_path last pt: (", rs_node_res.back().x, ", ",
+                  rs_node_res.back().y, ", ", rs_node_res.back().theta * RAD2ANG, " deg)");
+    OPENSPACE_LOG(I, "[ArcModel][analyticExpansions] rs_path A* nodes in path_nodes_: ", path_nodes_.size() - rs_node_res.size() + 1);
+    OPENSPACE_LOG(I, "[ArcModel][analyticExpansions] rs cal success !");
     return true;
   }
 
@@ -570,6 +573,10 @@ class ArcModel {
       last_node = path_nodes_.front();
     }
 
+    OPENSPACE_LOG(I, "[ArcModel][getPathResult] path_nodes_ size: ", path_nodes_.size(),
+                  " first: (", path_nodes_.front().x, ", ", path_nodes_.front().y, ", ",
+                  path_nodes_.front().theta * RAD2ANG, " deg) last: (", path_nodes_.back().x, ", ",
+                  path_nodes_.back().y, ", ", path_nodes_.back().theta * RAD2ANG, " deg)");
     for (auto p : path_nodes_) {
       if (p.direction != last_node.direction) {
         std::vector<Node_t> straight_traj;

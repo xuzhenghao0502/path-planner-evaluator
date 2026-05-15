@@ -4,8 +4,12 @@
 
 #define ERT_LOG_I(module, ...) \
   do { std::cout << "[INFO]" << module; _ert_print_args(__VA_ARGS__); std::cout << std::endl; } while(0)
+#ifdef OPENSPACE_STANDALONE
+#define ERT_LOG_D(module, ...) do {} while(0)
+#else
 #define ERT_LOG_D(module, ...) \
   do { std::cout << "[DEBUG]" << module; _ert_print_args(__VA_ARGS__); std::cout << std::endl; } while(0)
+#endif
 #define ERT_LOG_W(module, ...) \
   do { std::cout << "[WARN]" << module; _ert_print_args(__VA_ARGS__); std::cout << std::endl; } while(0)
 #define ERT_LOG_E(module, ...) \
