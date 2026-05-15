@@ -94,8 +94,9 @@ class PlannerBridgeNode : public rclcpp::Node {
   void declare_parameters() {
     this->declare_parameter("vehicle.length", 12.0);
     this->declare_parameter("vehicle.width", 2.6);
-    this->declare_parameter("vehicle.wheel_base", 2.8);
-    this->declare_parameter("vehicle.rear_overhang", 0.9);
+    this->declare_parameter("vehicle.wheel_base", 7.1);
+    this->declare_parameter("vehicle.front_overhang", 1.46);
+    this->declare_parameter("vehicle.rear_overhang", 3.33);
     this->declare_parameter("vehicle.rear_edge_to_ego", 3.5);
     this->declare_parameter("vehicle.width_without_rearview_mirror", 2.6);
 
@@ -129,6 +130,7 @@ class PlannerBridgeNode : public rclcpp::Node {
     vc.mutable_vehicle_param()->set_length(this->get_parameter("vehicle.length").as_double());
     vc.mutable_vehicle_param()->set_width(this->get_parameter("vehicle.width").as_double());
     vc.mutable_vehicle_param()->set_wheel_base(this->get_parameter("vehicle.wheel_base").as_double());
+    vc.mutable_vehicle_param()->set_front_overhang(this->get_parameter("vehicle.front_overhang").as_double());
     vc.mutable_vehicle_param()->set_rear_overhang(this->get_parameter("vehicle.rear_overhang").as_double());
     vc.mutable_vehicle_param()->set_rear_edge_to_ego(this->get_parameter("vehicle.rear_edge_to_ego").as_double());
     vc.mutable_vehicle_param()->set_width_without_rearview_mirror(
