@@ -352,7 +352,7 @@ class MapEditorNode(Node):
         return marker
 
     def _make_fill_marker(self, vertices, idx, is_occupied):
-        """Create a filled TRIANGLE_LIST marker (fan from centroid)."""
+        """Create a filled TRIANGLE_LIST marker (fan from centroid for convex polygons)."""
         if len(vertices) < 3:
             return None
 
@@ -363,7 +363,7 @@ class MapEditorNode(Node):
         marker.id = idx
         marker.type = Marker.TRIANGLE_LIST
         marker.action = Marker.ADD
-        marker.pose.position.z = -0.01  # slightly below outline
+        marker.pose.position.z = -0.01
         marker.color.a = 0.25
 
         if is_occupied:
@@ -374,7 +374,6 @@ class MapEditorNode(Node):
             marker.color.g = 1.0
         marker.color.b = 0.0
 
-        # Compute centroid for fan triangulation
         cx = sum(v[0] for v in vertices) / len(vertices)
         cy = sum(v[1] for v in vertices) / len(vertices)
 
