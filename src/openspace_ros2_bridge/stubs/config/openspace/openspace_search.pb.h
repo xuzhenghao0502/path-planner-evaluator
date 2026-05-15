@@ -35,7 +35,7 @@ struct ArcModelConfig {
   float map_x_lower_ = -1000, map_y_lower_ = -1000, map_x_upper_ = 1000, map_y_upper_ = 1000;
   int32_t angular_upper_ = 300;
   float map_grid_resolution_ = 1.0;
-  float steering_radian_ = 0.4;
+  float steering_radian_ = 0.698;
   float search_stop_distance_x_ = 0.5;
   float search_stop_distance_y_ = 0.5;
   float search_stop_angle_ = 5.0;
