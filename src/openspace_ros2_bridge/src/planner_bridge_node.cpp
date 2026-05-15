@@ -361,27 +361,44 @@ class PlannerBridgeNode : public rclcpp::Node {
     double rear_edge_to_ego = vehicle_config_.vehicle_param().rear_edge_to_ego();
     double shift = length / 2.0 - rear_edge_to_ego;
 
+    double hl = length / 2.0;
+    double hw = width / 2.0;
+
     for (size_t i = 0; i < path.size(); ++i) {
       visualization_msgs::msg::Marker marker;
       marker.header.stamp = this->now();
       marker.header.frame_id = "map";
       marker.ns = "vehicle_box";
       marker.id = static_cast<int>(i);
-      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
       marker.action = visualization_msgs::msg::Marker::ADD;
-      double theta = path[i].theta();
-      marker.pose.position.x = path[i].x() + shift * std::cos(theta);
-      marker.pose.position.y = path[i].y() + shift * std::sin(theta);
-      marker.pose.position.z = 0.15;
-      marker.pose.orientation.z = std::sin(theta / 2.0);
-      marker.pose.orientation.w = std::cos(theta / 2.0);
-      marker.scale.x = length;
-      marker.scale.y = width;
-      marker.scale.z = 0.3;
+      marker.pose.orientation.w = 1.0;
+      marker.scale.x = 0.08;
       marker.color.r = 0.0;
       marker.color.g = 0.8;
       marker.color.b = 0.0;
       marker.color.a = 0.5;
+
+      double theta = path[i].theta();
+      double cx = path[i].x() + shift * std::cos(theta);
+      double cy = path[i].y() + shift * std::sin(theta);
+      double cos_t = std::cos(theta);
+      double sin_t = std::sin(theta);
+
+      // Front-left, front-right, rear-right, rear-left (close loop)
+      auto addPt = [&](double lf, double wf) {
+        geometry_msgs::msg::Point p;
+        p.x = cx + lf * cos_t - wf * sin_t;
+        p.y = cy + lf * sin_t + wf * cos_t;
+        p.z = 0.15;
+        marker.points.push_back(p);
+      };
+      addPt(hl, -hw);  // front-left
+      addPt(hl, hw);   // front-right
+      addPt(-hl, hw);  // rear-right
+      addPt(-hl, -hw); // rear-left
+      addPt(hl, -hw);  // close loop back to front-left
+
       arr.markers.push_back(marker);
     }
     box_pub_->publish(arr);
