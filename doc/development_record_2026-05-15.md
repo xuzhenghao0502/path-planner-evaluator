@@ -202,6 +202,19 @@ R_min = wheel_base / tan(steering_radian)
 3. **路径点坐标系必须明确参考点含义** → ego point ≠ vehicle center，可视化/碰撞检测必须统一使用相同偏移量
 4. **GridMap的init/update流程有状态依赖** → `init_` 标志决定是否重新初始化，漏设会导致数据丢失
 
+### 坑 #7: Docker容器与宿主机代码不同步 ✅ 已解决
+- **现象**：宿主机修改了代码（特别是Python脚本），但容器中执行时用的仍是旧代码，或改了C++代码后 `colcon build` 报错找不到文件
+- **根因**：
+  1. 本项目的Docker容器 `ros2-cc` 通过 `-v` 挂载了宿主机目录，Python脚本使用 `--symlink-install`，修改后容器中直接生效
+  2. 但如果未设置 volume 挂载或使用了 `--copy-install`，容器内的代码是构建时的快照，与宿主机隔离
+  3. C++ 源码修改后必须在容器内重新 `colcon build` 才能生效，直接运行不会更新
+  4. 如果在宿主机 `git checkout` 切换分支后，容器内的构建产物可能与新代码不匹配，导致运行时错误
+- **解决**：
+  1. 确认 `docker run` 或 `docker-compose` 中挂载了项目目录：`-v /home/zhenghao/Program/first-cc:/root/ros2_ws/src/...`
+  2. Python脚本修改后无需重建（--symlink-install），但需重启节点
+  3. C++代码修改后必须在容器内重建：`docker exec ros2-cc bash -c "cd /root/ros2_ws && colcon build --packages-select openspace_ros2_bridge --symlink-install"`
+  4. 养成习惯：修改代码前先确认当前在容器内还是宿主机操作，修改后立即在容器内验证
+
 ---
 
 ## 六、RViz2 操作指南
