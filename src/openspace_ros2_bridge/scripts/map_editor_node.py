@@ -61,6 +61,9 @@ class MapEditorNode(Node):
         # Auto-load scene on startup if it exists
         self._auto_load_scene()
 
+        # Periodic timer to republish visualization (ensures RViz can always see loaded polygons)
+        self.create_timer(1.0, self._on_timer)
+
         self.get_logger().info(
             'Map Editor Node ready. Mode: obstacle. '
             'Use "Publish Point" to click vertices. '
@@ -86,6 +89,10 @@ class MapEditorNode(Node):
             self.get_logger().info(f"Auto-loaded {len(self.polygons)} polygons from {path}")
         except Exception as e:
             self.get_logger().error(f"Failed to load scene {path}: {e}")
+
+    def _on_timer(self):
+        """Periodically republish markers so RViz always displays loaded polygons."""
+        self._publish_all()
 
     # ---- Topic callbacks ----
 
