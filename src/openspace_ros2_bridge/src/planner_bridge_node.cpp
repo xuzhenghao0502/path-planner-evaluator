@@ -102,7 +102,7 @@ class PlannerBridgeNode : public rclcpp::Node {
 
     this->declare_parameter("search.step_size", 0.3);
     this->declare_parameter("search.steering_angle_discrete_num", 1);
-    this->declare_parameter("search.steering_radian", 0.698);
+    this->declare_parameter("search.steering_radian", 0.535);
     this->declare_parameter("search.search_time_limit", 10.0);
     this->declare_parameter("search.shot_distance", 8.0);
     this->declare_parameter("search.angular_upper", 300);
