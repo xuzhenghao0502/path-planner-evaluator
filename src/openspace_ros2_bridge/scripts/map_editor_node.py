@@ -58,11 +58,34 @@ class MapEditorNode(Node):
         self.create_service(Trigger, "~/set_mode_obstacle", self.on_set_mode_obstacle)
         self.create_service(Trigger, "~/set_mode_free", self.on_set_mode_free)
 
+        # Auto-load scene on startup if it exists
+        self._auto_load_scene()
+
         self.get_logger().info(
             'Map Editor Node ready. Mode: obstacle. '
             'Use "Publish Point" to click vertices. '
             'After >=3 vertices, click near first vertex to auto-close.'
         )
+
+    def _auto_load_scene(self):
+        """Load scene file automatically at startup if it exists."""
+        scene_dir = self.get_parameter("scene_dir").value
+        scene_name = self.get_parameter("scene_name").value
+        path = os.path.join(scene_dir, scene_name)
+
+        if not os.path.exists(path):
+            self.get_logger().info(f"Scene file not found: {path}, starting with empty map")
+            return
+
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+            self.polygons = data.get("polygons", [])
+            self.current_polygon = []
+            self._publish_all()
+            self.get_logger().info(f"Auto-loaded {len(self.polygons)} polygons from {path}")
+        except Exception as e:
+            self.get_logger().error(f"Failed to load scene {path}: {e}")
 
     # ---- Topic callbacks ----
 

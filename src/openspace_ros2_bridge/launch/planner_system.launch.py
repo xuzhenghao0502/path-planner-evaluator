@@ -20,6 +20,11 @@ def generate_launch_description():
                 default_value=default_rviz,
                 description="RViz2 config file",
             ),
+            DeclareLaunchArgument(
+                "scene_name",
+                default_value="customer_map.json",
+                description="Scene file to load at startup (empty = no scene)",
+            ),
             # TF publisher: map -> odom (10 Hz, required by RViz2 for fixed frame "map")
             Node(
                 package="openspace_ros2_bridge",
@@ -33,6 +38,9 @@ def generate_launch_description():
                 executable="map_editor_node.py",
                 name="map_editor_node",
                 output="screen",
+                parameters=[{
+                    "scene_name": LaunchConfiguration("scene_name"),
+                }],
             ),
             # Planner Bridge Node
             Node(

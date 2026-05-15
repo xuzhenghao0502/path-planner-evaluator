@@ -113,10 +113,10 @@ class PlannerBridgeNode : public rclcpp::Node {
     this->declare_parameter("search.length_collision_buff", 0.1);
 
     this->declare_parameter("map.resolution", 0.1);
-    this->declare_parameter("map.size_x", 40.0);
-    this->declare_parameter("map.size_y", 40.0);
-    this->declare_parameter("map.origin_x", 20.0);
-    this->declare_parameter("map.origin_y", 20.0);
+    this->declare_parameter("map.size_x", 55.0);
+    this->declare_parameter("map.size_y", 55.0);
+    this->declare_parameter("map.origin_x", 5.0);
+    this->declare_parameter("map.origin_y", 50.0);
 
     RCLCPP_INFO(this->get_logger(), "Parameters declared (use --ros-args -p <param>:=<value> to override)");
   }
