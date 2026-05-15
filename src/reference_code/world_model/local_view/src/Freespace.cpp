@@ -162,6 +162,7 @@ void Freespace::init(const FreespaceConfig& config) {
   config_ = config;
   initGridMap();
   Init4CollisionChecking();
+  init_ = true;
 }
 
 void Freespace::Init4CollisionChecking()  // 计算七圆碰撞校验模型中的参数.
