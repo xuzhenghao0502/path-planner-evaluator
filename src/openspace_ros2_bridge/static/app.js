@@ -477,9 +477,9 @@ function _onBaseDrag(kind) {
   };
 }
 
-// Handle (hollow circle) drag — uses raw DOM capture-phase listeners to
-// completely bypass Leaflet's event system.  Only yaw is updated; (x,y) is
-// locked at mousedown.  Map clicks are suppressed for 250ms after drag ends.
+// Handle (hollow circle) drag — uses raw DOM capture-phase listeners for
+// both mouse and touch events, bypassing Leaflet.  Only yaw is updated;
+// (x,y) is locked at drag-start.  Map clicks suppressed for 250ms after drag.
 function _setupHandleDrag(kind, handle, baseRef) {
   handle.on('add', function() {
     const el = handle.getElement();
@@ -487,33 +487,36 @@ function _setupHandleDrag(kind, handle, baseRef) {
 
     let active = false;
     let lockedBase = null;
-    let moved = false;  // track if actual drag happened (vs. static click)
 
-    // Capture phase: fire BEFORE Leaflet sees the event
+    // Extract clientX/Y from either mouse or touch event
+    function _clientXY(e) {
+      if (e.touches && e.touches.length > 0) {
+        return { cx: e.touches[0].clientX, cy: e.touches[0].clientY };
+      }
+      return { cx: e.clientX, cy: e.clientY };
+    }
+
     function onDown(e) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       active = true;
-      moved = false;
       const baseLL = baseRef.getLatLng();
       lockedBase = { lng: baseLL.lng, lat: baseLL.lat };
-      // Prevent map pan and base-marker drag while adjusting angle
       map.dragging.disable();
       if (baseRef.dragging) baseRef.dragging.disable();
     }
 
     function onMove(e) {
       if (!active || !lockedBase) return;
+      e.preventDefault();  // prevent touch-scroll
+      const { cx, cy } = _clientXY(e);
       const rect = map.getContainer().getBoundingClientRect();
-      const cx = e.clientX - rect.left;
-      const cy = e.clientY - rect.top;
-      const ll = map.containerPointToLatLng([cx, cy]);
+      const ll = map.containerPointToLatLng([cx - rect.left, cy - rect.top]);
       const dx = ll.lng - lockedBase.lng;
       const dy = ll.lat - lockedBase.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 0.3) return;
-      moved = true;
       const yaw = Math.atan2(dy, dx) * 180 / Math.PI;
 
       _redrawArrowDirection(kind, lockedBase.lng, lockedBase.lat, yaw);
@@ -531,21 +534,26 @@ function _setupHandleDrag(kind, handle, baseRef) {
       lockedBase = null;
       map.dragging.enable();
       if (baseRef.dragging) baseRef.dragging.enable();
-      // Block map click for 250ms after handle drag ends, whether or not
-      // the mouse actually moved.  This prevents the mouseup from leaking
-      // through as a map click that would call setStart/setGoal again.
       _blockMapClickUntil = Date.now() + 250;
     }
 
-    // Capture phase (true) so we intercept before Leaflet
+    // Mouse listeners (capture phase)
     el.addEventListener('mousedown', onDown, true);
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp, true);
+
+    // Touch listeners (capture phase, passive:false so preventDefault works)
+    el.addEventListener('touchstart', onDown, { capture: true, passive: false });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp, { capture: true, passive: false });
 
     handle._cleanup = function() {
       el.removeEventListener('mousedown', onDown, true);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp, true);
+      el.removeEventListener('touchstart', onDown, { capture: true });
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp, { capture: true });
     };
   });
 }
