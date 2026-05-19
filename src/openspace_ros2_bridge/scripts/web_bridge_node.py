@@ -334,9 +334,8 @@ class WebBridgeNode(Node):
         self.plan_client = self.create_client(Trigger, "/planner_bridge_node/plan_path")
 
         # ---- Timer to process incoming queue ----
-        self._pending_plan = None
-        self._plan_future = None
-        self._plan_start_time = 0.0
+        self._planning_active = False
+        self._planning_lock = threading.Lock()
         self.create_timer(0.05, self._process_queue)
 
         # ---- Load vehicle presets ----
@@ -403,9 +402,9 @@ class WebBridgeNode(Node):
         boxes = []
         for m in msg.markers:
             if m.points:
-                cx = sum(pt.x for pt in m.points) / len(m.points)
-                cy = sum(pt.y for pt in m.points) / len(m.points)
-                boxes.append({"x": cx, "y": cy})
+                # Pass corner points directly for oriented rendering on frontend
+                corners = [{"x": pt.x, "y": pt.y} for pt in m.points]
+                boxes.append({"corners": corners})
         state.latest_boxes = boxes
         from_ros_queue.put({"type": "boxes_update", "data": boxes})
 
@@ -484,6 +483,16 @@ class WebBridgeNode(Node):
         self.goal_pub.publish(msg)
 
     def _do_plan(self, data: dict):
+        # Prevent concurrent plan requests
+        if self._planning_active:
+            from_ros_queue.put({
+                "type": "plan_result",
+                "success": False,
+                "message": "Planning already in progress – please wait",
+            })
+            return
+        self._planning_active = True
+
         # Reset results
         state.latest_path = None
         state.latest_boxes = None
@@ -511,8 +520,8 @@ class WebBridgeNode(Node):
         goal_msg.pose = _make_pose(goal.get("x", 0), goal.get("y", 0), goal.get("yaw_deg", 0))
         self.goal_pub.publish(goal_msg)
 
-        # Small delay for subscribers
-        time.sleep(0.3)
+        # Delay for subscribers (ROS2 message delivery + callback processing)
+        time.sleep(1.0)
 
         # Signal computing status
         from_ros_queue.put({"type": "plan_status", "status": "computing"})
@@ -521,47 +530,52 @@ class WebBridgeNode(Node):
         #    The timer callback must return so the executor can process
         #    the service response.
         def _plan_worker():
-            if not self.plan_client.wait_for_service(timeout_sec=5.0):
-                from_ros_queue.put({
-                    "type": "plan_result",
-                    "success": False,
-                    "message": "Planner service not available",
-                })
-                state.plan_success = False
-                state.plan_message = "Planner service not available"
-                return
+            try:
+                if not self.plan_client.wait_for_service(timeout_sec=5.0):
+                    from_ros_queue.put({
+                        "type": "plan_result",
+                        "success": False,
+                        "message": "Planner service not available",
+                    })
+                    state.plan_success = False
+                    state.plan_message = "Planner service not available"
+                    return
 
-            req = Trigger.Request()
-            resp = self.plan_client.call(req)
-            # Brief sleep so executor can dispatch subscriber callbacks
-            # (path_update, boxes_update) before we read state.latest_path
-            time.sleep(0.3)
-            state.plan_success = resp.success
-            state.plan_message = resp.message
+                req = Trigger.Request()
+                resp = self.plan_client.call(req)
+                # Poll for subscriber callbacks to deliver path/boxes (up to 3s)
+                for _ in range(30):
+                    if state.latest_path is not None:
+                        break
+                    time.sleep(0.1)
+                state.plan_success = resp.success
+                state.plan_message = resp.message
 
-            if resp.success and state.latest_path:
-                total_len = 0.0
-                pts = state.latest_path
-                for i in range(1, len(pts)):
-                    dx = pts[i]["x"] - pts[i - 1]["x"]
-                    dy = pts[i]["y"] - pts[i - 1]["y"]
-                    total_len += math.sqrt(dx * dx + dy * dy)
+                if resp.success and state.latest_path:
+                    total_len = 0.0
+                    pts = state.latest_path
+                    for i in range(1, len(pts)):
+                        dx = pts[i]["x"] - pts[i - 1]["x"]
+                        dy = pts[i]["y"] - pts[i - 1]["y"]
+                        total_len += math.sqrt(dx * dx + dy * dy)
 
-                from_ros_queue.put({
-                    "type": "plan_result",
-                    "success": True,
-                    "message": resp.message,
-                    "path": state.latest_path,
-                    "boxes": state.latest_boxes or [],
-                    "path_length": round(total_len, 2),
-                    "point_count": len(state.latest_path),
-                })
-            else:
-                from_ros_queue.put({
-                    "type": "plan_result",
-                    "success": False,
-                    "message": resp.message,
-                })
+                    from_ros_queue.put({
+                        "type": "plan_result",
+                        "success": True,
+                        "message": resp.message,
+                        "path": state.latest_path,
+                        "boxes": state.latest_boxes or [],
+                        "path_length": round(total_len, 2),
+                        "point_count": len(state.latest_path),
+                    })
+                else:
+                    from_ros_queue.put({
+                        "type": "plan_result",
+                        "success": False,
+                        "message": resp.message,
+                    })
+            finally:
+                self._planning_active = False
 
         threading.Thread(target=_plan_worker, daemon=True, name="plan-worker").start()
 

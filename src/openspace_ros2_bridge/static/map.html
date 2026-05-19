@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Openspace Planner</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="auth-bar">
+  <span id="authUser"></span>
+  <button onclick="doLogout()">Logout</button>
+</div>
+<div class="map-page">
+  <div class="map-area" id="mapContainer">
+    <div id="map"></div>
+    <div class="map-tooltip" id="tooltip"></div>
+  </div>
+  <div class="control-panel" id="ctrlPanel">
+    <!-- Mode -->
+    <div class="section">
+      <h3>Mode</h3>
+      <div class="mode-btns">
+        <button class="mode-btn obstacle active" data-mode="obstacle" onclick="setMode('obstacle')">SetObstaclePoint</button>
+        <button class="mode-btn select-obstacle" data-mode="selectObstacle" onclick="setMode('selectObstacle')">SelectObstacle</button>
+        <button class="mode-btn start" data-mode="start" onclick="setMode('start')">Set Start</button>
+        <button class="mode-btn goal" data-mode="goal" onclick="setMode('goal')">Set Goal</button>
+      </div>
+    </div>
+
+    <!-- Polygon ops -->
+    <div class="section">
+      <h3>Current Polygon</h3>
+      <div class="poly-ops">
+        <button onclick="undoLastVertex()" title="Remove last vertex">Undo Point</button>
+        <button onclick="closePolygon()" title="Complete current polygon">Generate</button>
+        <button class="danger" onclick="cancelDrawing()" title="Cancel drawing">Cancel</button>
+        <button class="danger" onclick="deleteSelectedPolygon()">Delete Selected</button>
+        <button class="danger" onclick="clearAllPolygons()">Clear All</button>
+      </div>
+      <p class="poly-info" id="polyInfo">No polygon drawn</p>
+    </div>
+
+    <!-- Coordinate input -->
+    <div class="section">
+      <h3>Bulk Coordinates (x, y per line)</h3>
+      <textarea class="coord-input" id="coordInput" placeholder="e.g.:&#10;5.0, 10.0&#10;8.0, 12.0&#10;..."></textarea>
+      <div class="poly-ops" style="margin-top:4px">
+        <button onclick="importCoords()">Import as Polygon</button>
+      </div>
+    </div>
+
+    <!-- Scene management -->
+    <div class="section">
+      <h3>Scenes</h3>
+      <div class="scene-row">
+        <select id="sceneSelect" onchange="onSceneSelect()"></select>
+        <button onclick="loadSelectedScene()">Load</button>
+      </div>
+      <button onclick="deleteSelectedScene()" style="margin-top:4px;font-size:11px;color:#e53e3e;border-color:#fecaca;">Delete</button>
+      <div class="save-row">
+        <input id="saveName" type="text" placeholder="Filename (e.g. my_map.json)">
+        <button onclick="saveScene()">Save As</button>
+      </div>
+    </div>
+
+    <!-- Vehicle config -->
+    <div class="section">
+      <h3>Vehicle Config</h3>
+      <div class="veh-preset">
+        <select id="vehPreset" onchange="onPresetChange()"></select>
+      </div>
+      <div class="veh-params" id="vehParams"></div>
+      <p class="veh-note" id="vehNote"></p>
+    </div>
+
+    <!-- Start / Goal -->
+    <div class="section">
+      <h3>Start Pose</h3>
+      <p class="pose-label start" id="startLabel">-- not set --</p>
+      <div class="pose-row">
+        <label>X</label><input id="startX" type="number" step="0.1" value="5.0">
+        <label>Y</label><input id="startY" type="number" step="0.1" value="19.5">
+        <label>Yaw°</label><input id="startYaw" type="number" step="0.1" value="0.0">
+      </div>
+    </div>
+    <div class="section">
+      <h3>Goal Pose</h3>
+      <p class="pose-label goal" id="goalLabel">-- not set --</p>
+      <div class="pose-row">
+        <label>X</label><input id="goalX" type="number" step="0.1" value="35.0">
+        <label>Y</label><input id="goalY" type="number" step="0.1" value="19.5">
+        <label>Yaw°</label><input id="goalYaw" type="number" step="0.1" value="0.0">
+      </div>
+    </div>
+
+    <!-- Plan button -->
+    <button class="plan-btn" id="planBtn" onclick="triggerPlan()">
+      <span class="spinner"></span> Start Planning
+    </button>
+
+    <!-- Visualization toggles -->
+    <div class="section">
+      <h3>Visualization</h3>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="showBoxes" checked onchange="toggleBoxes()"> Show vehicle boxes
+      </label>
+    </div>
+
+    <!-- Result -->
+    <div class="result-box" id="resultBox"></div>
+
+    <!-- Status -->
+    <div class="status-bar ok" id="statusBar">Ready</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

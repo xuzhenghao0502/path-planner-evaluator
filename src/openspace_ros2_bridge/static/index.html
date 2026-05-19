@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Openspace Planner - Login</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="login-container">
+  <div class="login-card">
+    <h1>Openspace Planner</h1>
+    <p>Web-based planning feasibility assessment</p>
+    <label for="username">Username</label>
+    <input id="username" type="text" placeholder="admin" autocomplete="username">
+    <label for="password">Password</label>
+    <input id="password" type="password" placeholder="Enter password" autocomplete="current-password">
+    <p class="login-err" id="loginErr"></p>
+    <button id="loginBtn" onclick="doLogin()">Login</button>
+  </div>
+</div>
+
+<script>
+const el = (id) => document.getElementById(id);
+
+async function doLogin() {
+  const btn = el('loginBtn');
+  const err = el('loginErr');
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: el('username').value,
+        password: el('password').value
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      sessionStorage.setItem('token', data.token);
+      location.href = '/map.html';
+    } else {
+      err.textContent = data.detail || 'Login failed';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Login';
+    }
+  } catch (e) {
+    err.textContent = 'Cannot reach server';
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
