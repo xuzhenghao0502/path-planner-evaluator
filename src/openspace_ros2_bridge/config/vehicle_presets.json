@@ -1,0 +1,48 @@
+{
+  "presets": [
+    {
+      "name": "9m6",
+      "label": "9m6 (12m x 2.6m, 轴距 7.1m)",
+      "params": {
+        "vehicle.length": 12.0,
+        "vehicle.width": 2.6,
+        "vehicle.wheel_base": 7.1,
+        "vehicle.front_overhang": 1.46,
+        "vehicle.rear_overhang": 3.33,
+        "vehicle.rear_edge_to_ego": 3.5,
+        "vehicle.width_without_rearview_mirror": 2.6
+      }
+    },
+    {
+      "name": "standard_car",
+      "label": "Standard Car (4.8m x 1.9m, 轴距 2.8m)",
+      "params": {
+        "vehicle.length": 4.8,
+        "vehicle.width": 1.9,
+        "vehicle.wheel_base": 2.8,
+        "vehicle.front_overhang": 0.9,
+        "vehicle.rear_overhang": 1.1,
+        "vehicle.rear_edge_to_ego": 2.4,
+        "vehicle.width_without_rearview_mirror": 1.9
+      }
+    },
+    {
+      "name": "minibus",
+      "label": "Minibus (7.0m x 2.2m, 轴距 4.0m)",
+      "params": {
+        "vehicle.length": 7.0,
+        "vehicle.width": 2.2,
+        "vehicle.wheel_base": 4.0,
+        "vehicle.front_overhang": 1.2,
+        "vehicle.rear_overhang": 1.8,
+        "vehicle.rear_edge_to_ego": 3.0,
+        "vehicle.width_without_rearview_mirror": 2.2
+      }
+    },
+    {
+      "name": "custom",
+      "label": "Custom",
+      "params": {}
+    }
+  ]
+}
